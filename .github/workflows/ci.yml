@@ -20,6 +20,8 @@ jobs:
         run: git ls-files -z '*.lua' | xargs -0 -r -n 1 luac5.1 -p
       - name: Validate runtime manifest
         run: lua5.1 Tools/check.lua
+      - name: Validate catalog and run regression tests
+        run: lua5.1 tests/test_catalog.lua
       - name: Verify invalid runtime Lua is rejected
         shell: bash
         run: |

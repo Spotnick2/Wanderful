@@ -22,6 +22,26 @@ jobs:
         run: lua5.1 Tools/check.lua
       - name: Validate catalog and run regression tests
         run: lua5.1 tests/test_catalog.lua
+      - name: Validate probe manifest and API failure paths
+        run: |
+          lua5.1 Tools/check.lua Tools/WanderfulProbe/WanderfulProbe.toc
+          lua5.1 tests/test_probe_manifest.lua
+          lua5.1 tests/test_probe_measurements.lua
+          lua5.1 tests/test_probe_module.lua
+      - name: Real-host integration (local checkout only)
+        env:
+          FOREVERPROBE_OPTIONAL: "1"
+        run: lua5.1 tests/test_probe_host.lua
+      - name: Parse developer PowerShell scripts
+        shell: pwsh
+        run: |
+          foreach ($file in @("Tools/deploy.ps1", "tests/run.ps1")) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Join-Path $PWD $file), [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
+          }
       - name: Verify invalid runtime Lua is rejected
         shell: bash
         run: |

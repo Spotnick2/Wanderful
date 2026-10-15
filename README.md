@@ -63,5 +63,10 @@ show that literal version. Release preparation and package verification are trac
 Local reference projects, when available: `../References`, `../LibGlass`, and `../ForeverProbe`.
 Read `../References/PROBES.md` and `../ForeverProbe/docs/GUIDE.md` before adding probes.
 
+The development probe for item/quest APIs is now available. Run `pwsh tests/run.ps1`, then
+`pwsh Tools/deploy.ps1 -Probe` and `/reload`. In game, `/fp steps wand check` starts the guided
+experiment. See [probe setup and evidence status](https://github.com/Spotnick2/Wanderful/blob/main/docs/FOREVER-PROBE.md).
+Runtime findings and real-host integration validation remain pending.
+
 Report problems through [GitHub issues](https://github.com/Spotnick2/Wanderful/issues), including
 the client build, locale, reproduction steps, and any Lua error.

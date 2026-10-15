@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: WanderfulProbe
+## Author: Spotnick
+## Notes: Wand API measurements for Wanderful: /fp wand and /fp steps wand check.
+## Version: dev
+## Dependencies: ForeverProbe
+## OptionalDeps: Wanderful
+## SavedVariables: WanderfulProbeDB
+
+Measurements.lua
+WanderfulProbe.lua

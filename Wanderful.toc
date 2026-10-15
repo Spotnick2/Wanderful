@@ -5,3 +5,5 @@
 ## Version: @project-version@
 
 Core.lua
+Catalog.lua
+Data\Wands.lua

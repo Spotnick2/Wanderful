@@ -2,8 +2,10 @@
 
 A wand upgrade guide in development for casters leveling in **World of Warcraft: Forever**.
 
-This bootstrap only registers `/wanderful`, which prints a development-status message. It does
-not yet contain a wand catalog, recommendations, comparisons, or a guide window.
+`/wanderful` prints a development-status message. A nine-wand sample catalog is bundled for
+development; recommendations, comparisons, and a guide window are not implemented yet.
+See the [catalog schema and evidence notes](https://github.com/Spotnick2/Wanderful/blob/main/docs/CATALOG.md)
+for data coverage and limitations.
 
 The [roadmap](https://github.com/Spotnick2/Wanderful/issues/10) tracks the planned level list,
 acquisition details, and upgrade flowchart.
@@ -26,6 +28,7 @@ The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved 
    ```sh
    lua Tools/check.lua
    luac -p Tools/check.lua
+   lua tests/test_catalog.lua
    ```
 
    `Tools/check.lua` compiles every Lua file named by the TOC without running it. Missing files,
@@ -34,7 +37,8 @@ The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved 
    that a deliberately invalid runtime file is rejected.
 
 4. For an in-game check, create an `Interface/AddOns/Wanderful` folder under `_classic_beta_`
-   and copy **only `Wanderful.toc` and `Core.lua`** into it. Enable the addon and `/reload`.
+   and copy `Wanderful.toc`, `Core.lua`, `Catalog.lua`, and `Data/Wands.lua` into it, preserving
+   the `Data` directory. Enable the addon and `/reload`.
 5. Run `/wanderful` and verify that exactly one development-status message appears with no Lua
    error. Record `GetBuildInfo()` and the locale in the PR; do not report syntax checks as an
    in-game pass.

@@ -139,9 +139,9 @@ test("combat measurement never treats missing or restricted state as active", fu
     w.combat = true
     assert(w.measure:CombatState() == "combat")
     w.env.InCombatLockdown = function() return w.secret() end
-    assert(not w.measure:InCombat())
+    assert(w.measure:CombatState() == "restricted")
     w.env.InCombatLockdown = nil
-    assert(not w.measure:InCombat())
+    assert(w.measure:CombatState() == "unavailable")
 end)
 
 print("Probe measurements: " .. count .. " tests passed.")

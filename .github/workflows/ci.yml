@@ -1,0 +1,33 @@
+name: Lua validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lua 5.1 validation tool
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+      - name: Compile all tracked Lua
+        run: git ls-files -z '*.lua' | xargs -0 -r -n 1 luac5.1 -p
+      - name: Validate runtime manifest
+        run: lua5.1 Tools/check.lua
+      - name: Verify invalid runtime Lua is rejected
+        shell: bash
+        run: |
+          fixture=$(mktemp -d)
+          trap 'rm -rf "$fixture"' EXIT
+          printf 'local =\n' > "$fixture/Invalid.lua"
+          printf 'Invalid.lua\n' > "$fixture/Invalid.toc"
+          if lua5.1 Tools/check.lua "$fixture/Invalid.toc"; then
+            echo 'ERROR: invalid Lua passed validation'
+            exit 1
+          fi

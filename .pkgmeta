@@ -1,0 +1,14 @@
+package-as: Wanderful
+enable-nolib-creation: no
+
+ignore:
+  - .github
+  - .gitignore
+  - .playwright-mcp
+  - .release
+  - Tools
+  - tests
+  - docs
+  - AGENTS.md
+  - CLAUDE.md
+  - README.md

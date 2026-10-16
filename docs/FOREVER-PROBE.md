@@ -30,6 +30,41 @@ to save results. No console reading or chat paste is required. Offline tests mod
 environments and validate the new definitions against the real private host. They do not claim
 an in-game visual or filesystem persistence pass.
 
+### First guide UI run (2026-10-16)
+
+The owner completed ui revision 1 and uisave revision 1 on Forever **1.60.1.70425**, enUS,
+using PR #19 runtime e16d18f and pinned LibGlass r9. Saved host records and module STEP lines
+agree. Screenshots were inspected locally; raw SavedVariables and screenshots are not committed.
+
+- ui: completed 18:30:24-18:33:13 local, host runs #57-58; 4 yes, 5 done,
+  checks **1 FAIL, 1 PASS**. The four visual answers cover the list, details, filters and
+  layout. These observations do not replace the owner's requested UX pass.
+- Empty-slot check (step 6): completed by hand with rendered automatic/ready item **247789**,
+  rather than empty. This remains a failed/unresolved empty-state observation; the record
+  does not establish why that wand was still present. Do not count this as a removal pass.
+- Original-wand restoration (step 7): PASS, rendered automatic/ready item **11287**.
+- uisave: completed 18:33:28-18:34:46 local, host runs #58-60; 2 yes, 6 done,
+  check **1 PASS**. The owner confirmed a full client exit/relaunch at step 4.
+  Captured revision 10 was adopted as loadedRevision 10 after restart; the settings
+  signature matched and the owner confirmed visible persistence.
+- Before/after screenshots show the same 820 x 560 window, position and Physical-school
+  filter. Empty results are expected for that filter in the current sample.
+- Captured images: 183041 (list), 183140 (details), 183227 (filters), 183242 (layout),
+  183339 (before exit), 183436 (after exit), all named
+  WoWScrnShot_101626_<time>.jpg in the local Screenshots folder.
+- Layout/scale and details screenshots are evidence of the exercised view only. The record
+  has no UI-scale value or dark-interior note; those variations are not independently established.
+
+The owner will develop the UX direction with ChatGPT. No product UI changes accompany this
+evidence update. Issue #6 stays open; the empty-slot case needs a focused follow-up and the
+visual design needs the owner's UX pass.
+
+The supplied tooltip also confirms a catalog gap for **Novice's Practice Wand (247789)**:
+4-8 Arcane damage, speed 1.50, displayed 4.0 DPS, consistent with earlier live/probe DPS 4.
+A crafted copy is visible, but recipe, profession skill, reagents, source and equip-level
+requirements remain unverified. This is recorded under catalog issue #7 rather than silently
+adding an acquisition recommendation to the nine-item sample.
+
 ## Runtime adapter procedure (#5)
 
 Use /fp steps wand adapter for the runtime validation. The panel records context, checks and

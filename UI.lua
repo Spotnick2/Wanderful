@@ -4,6 +4,7 @@ local Guide = { rows = {}, pool = {} }
 ns.Guide = Guide
 local ACCENT = { 0.30, 0.83, 0.79 }
 local OPTIONS = {
+    sort = { { "level", "Sort: Equip level" }, { "dps", "Sort: Base DPS" }, { "gain", "Sort: DPS gain" } },
     class = { { "player", "My class" }, { "all", "All classes" }, { 8, "Mage" }, { 5, "Priest" }, { 9, "Warlock" } },
     faction = { { "player", "My faction" }, { "all", "Both factions" }, { "Alliance", "Alliance" }, { "Horde", "Horde" } },
     source = { { "all", "All sources" }, { "quest", "Quest" }, { "vendor", "Vendor" }, { "crafting", "Crafting" },
@@ -13,6 +14,13 @@ local OPTIONS = {
 }
 function Guide:Initialize(saved)
     self.settings = M.Settings(saved)
+    if self.settings.goal then
+        local found = false
+        for _, item in ipairs(ns.WandData.items) do
+            if item.itemID == self.settings.goal.itemID and item.variant == self.settings.goal.variant then found = true; break end
+        end
+        if not found then self.settings.goal = nil end
+    end
     self.loadedRevision = self.settings.revision
     self.ready = true
     return self.settings
@@ -126,6 +134,35 @@ function Guide:Choose(key, owner)
     end
     popup:Show()
 end
+function Guide:SelectGoal()
+    local goal = self.settings.goal
+    if not goal then return end
+    self.selectedKey = goal.itemID .. ":" .. goal.variant
+    self.pinnedSelection = self.selectedKey
+    self.detailScroll.slider:SetValue(0)
+    self:Refresh()
+end
+function Guide:Track()
+    if not self.selected then return end
+    local item, goal = self.selected.item, self.settings.goal
+    self.settings.goal = not (goal and goal.itemID == item.itemID and goal.variant == item.variant)
+        and { itemID = item.itemID, variant = item.variant } or nil
+    self:Touch(); self:Refresh()
+end
+local function icon(parent, size)
+    local b = CreateFrame("Button", nil, parent); b:SetSize(size, size)
+    b.image = b:CreateTexture(nil, "ARTWORK"); b.image:SetPoint("TOPLEFT", 2, -2); b.image:SetPoint("BOTTOMRIGHT", -2, 2)
+    b.outline = b:CreateTexture(nil, "BACKGROUND"); b.outline:SetAllPoints(b)
+    b:SetScript("OnEnter", function() ns.ItemPresentation.Tooltip(b, b.itemID) end)
+    b:SetScript("OnLeave", ns.ItemPresentation.HideTooltip)
+    b:SetScript("OnClick", function() ns.ItemPresentation.Link(b.itemID) end)
+    return b
+end
+local function paintIcon(b, itemID)
+    local info = ns.ItemPresentation.Metadata(itemID)
+    b.itemID = itemID; b.image:SetTexture(info.icon); b.outline:SetColorTexture(unpack(info.color))
+    return info
+end
 function Guide:Ensure()
     if self.window then return true end
     if not self.ready or not rawget(_G, "UIParent") then return false end
@@ -143,127 +180,170 @@ function Guide:Ensure()
     self.shell = surface(w, true)
     local content = CreateFrame("Frame", nil, w); content:SetAllPoints(w)
     content:SetFrameLevel(self.glass.ContentLevel(w)); self.content = content
-    local title = font(self.shell.top, 24, ACCENT); title:SetPoint("TOPLEFT", 18, -15); title:SetText("Wanderful")
-    local subtitle = font(self.shell.top, 11, { 0.64, 0.70, 0.77 })
-    subtitle:SetPoint("LEFT", title, "RIGHT", 15, -3); subtitle:SetText("WAND UPGRADES  /  FOREVER")
-    local drag = CreateFrame("Frame", nil, content); drag:SetPoint("TOPLEFT", 0, 0); drag:SetPoint("TOPRIGHT", -85, 0); drag:SetHeight(46)
+    local logo = icon(content, 32); logo:SetPoint("TOPLEFT", 18, -13); paintIcon(logo, 11287)
+    local title = font(self.shell.top, 25, ACCENT); title:SetPoint("TOPLEFT", 62, -15); title:SetText("Wanderful")
+    local subtitle = font(self.shell.top, 12, { 0.67, 0.78, 0.83 })
+    subtitle:SetPoint("TOPLEFT", 226, -25); subtitle:SetText("Your next wand, and the path ahead.")
+    local drag = CreateFrame("Frame", nil, content)
+    drag:SetPoint("TOPLEFT", 55, 0); drag:SetPoint("TOPRIGHT", -85, 0); drag:SetHeight(48)
     drag:EnableMouse(true); drag:RegisterForDrag("LeftButton")
     drag:SetScript("OnDragStart", function() w:StartMoving() end)
     drag:SetScript("OnDragStop", function() w:StopMovingOrSizing(); self:SaveWindow() end)
     local close = button(content, "Close", 58, function() w:Hide() end); close:SetPoint("TOPRIGHT", -15, -14)
-    self.baseline = font(content, 13)
-    self.baseline:SetPoint("TOPLEFT", 18, -58); self.baseline:SetHeight(43)
-    local auto = button(content, "Use equipped wand", 154, function() ns.Equipped:Automatic() end)
-    auto:SetPoint("TOPRIGHT", -18, -58)
-    self.baseline:SetPoint("TOPRIGHT", auto, "TOPLEFT", -14, 0)
+    self.header = pane(content); self.header:SetPoint("TOPLEFT", 18, -58); self.header:SetPoint("TOPRIGHT", -18, -58); self.header:SetHeight(64)
+    self.character = font(self.header, 15); self.character:SetPoint("TOPLEFT", 14, -12); self.character:SetWidth(205); self.character:SetHeight(42)
+    self.baselineIcon = icon(self.header, 36); self.baselineIcon:SetPoint("TOPLEFT", 232, -14)
+    self.baseline = font(self.header, 15); self.baseline:SetPoint("TOPLEFT", 280, -10); self.baseline:SetHeight(46)
+    self.autoButton = button(self.header, "Use equipped wand", 140, function() ns.Equipped:Automatic() end)
+    self.autoButton:SetPoint("TOPRIGHT", -12, -18)
+    self.baseline:SetPoint("TOPRIGHT", self.autoButton, "TOPLEFT", -12, 8)
 
+    self.browseTitle = font(content, 18, ACCENT); self.browseTitle:SetPoint("TOPLEFT", 18, -140); self.browseTitle:SetText("Browse Wands")
+    self.filtersButton = button(content, "Filters", 82, function()
+        self.filtersPanel:SetShown(not self.filtersPanel:IsShown())
+        if self.popup then self.popup:Hide() end
+    end); self.filtersButton:SetPoint("TOPRIGHT", -18, -134)
+    self.filterButtons = {}
+    self.filterButtons.source = button(content, "", 148, function(owner) self:Choose("source", owner) end)
+    self.filterButtons.source:SetPoint("TOPRIGHT", self.filtersButton, "TOPLEFT", -12, 0)
+    self.search = CreateFrame("EditBox", nil, content); self.search:SetAutoFocus(false); self.search:SetHeight(27)
+    self.search:SetPoint("TOPLEFT", 210, -134); self.search:SetPoint("TOPRIGHT", self.filterButtons.source, "TOPLEFT", -12, 0)
+    self.search:SetFontObject("GameFontHighlight"); self.search:SetMaxLetters(80); self.search:SetTextInsets(10, 10, 0, 0); surface(self.search, false)
+    self.searchHint = font(content, 12, { 0.60, 0.70, 0.75 }); self.searchHint:SetPoint("LEFT", self.search, "LEFT", 10, 0); self.searchHint:SetText("Find a wand or source...")
+    self.search:SetScript("OnTextChanged", function(box)
+        self.searchHint:SetShown(box:GetText() == "")
+        self:SetFilter("search", box:GetText())
+    end)
+    self.search:SetScript("OnEnterPressed", function(box) box:ClearFocus() end)
+    self.search:SetScript("OnEscapePressed", function(box) box:SetText(""); box:ClearFocus() end)
+
+    local panel = pane(content); self.filtersPanel = panel
+    panel:SetFrameLevel(content:GetFrameLevel() + 30); panel:SetFrameStrata("DIALOG")
+    panel:SetWidth(math.min(660, w:GetWidth() - 36)); panel:SetHeight(156)
+    panel:SetPoint("TOPRIGHT", self.filtersButton, "BOTTOMRIGHT", 0, -6); panel:EnableMouse(true); panel:Hide()
     local function levelBox(label, x, key)
-        local fs = font(content, 11, { 0.70, 0.74, 0.80 }); fs:SetPoint("TOPLEFT", x, -108); fs:SetText(label)
-        local box = CreateFrame("EditBox", nil, content)
-        box:SetSize(47, 26); box:SetPoint("TOPLEFT", x + 34, -102); box:SetAutoFocus(false)
-        box:SetFontObject("GameFontHighlightSmall"); box:SetNumeric(true); box:SetMaxLetters(3)
+        local fs = font(panel, 12); fs:SetPoint("TOPLEFT", x, -18); fs:SetText(label)
+        local box = CreateFrame("EditBox", nil, panel)
+        box:SetSize(47, 27); box:SetPoint("TOPLEFT", x + 38, -12); box:SetAutoFocus(false)
+        box:SetFontObject("GameFontHighlight"); box:SetNumeric(true); box:SetMaxLetters(3)
         box:SetTextInsets(7, 5, 0, 0); surface(box, false)
         box:SetScript("OnEnterPressed", function() self:SetFilter(key, tonumber(box:GetText())); box:ClearFocus(); self:Refresh() end)
         box:SetScript("OnEscapePressed", function() box:ClearFocus(); self:Refresh() end)
         return box
     end
-    self.minBox, self.maxBox = levelBox("From", 18, "minLevel"), levelBox("To", 113, "maxLevel")
-    local range = button(content, "Follow my level", 124, function()
-        local p = self.settings.filters
-        p.minLevel, p.maxLevel = nil, nil; self:Touch(); self:Refresh()
-    end); range:SetPoint("TOPLEFT", 211, -102)
-    self.upgrades = button(content, "All wands", 142, function() self:SetFilter("upgradesOnly", not self.settings.filters.upgradesOnly) end)
-    self.upgrades:SetPoint("TOPLEFT", 347, -102)
-    local reset = button(content, "Reset filters", 108, function()
+    self.minBox, self.maxBox = levelBox("From", 14, "minLevel"), levelBox("To", 116, "maxLevel")
+    local range = button(panel, "Follow my level", 124, function()
+        self.settings.filters.minLevel, self.settings.filters.maxLevel = nil, nil; self:Touch(); self:Refresh()
+    end); range:SetPoint("TOPLEFT", 222, -12)
+    self.resetButton = button(panel, "Reset filters", 112, function()
         self.settings.filters = M.Settings(nil).filters; self:Touch(); self:Refresh()
-    end); reset:SetPoint("TOPLEFT", 501, -102)
-    self.filterButtons = {}
-    local x = 18
-    for _, spec in ipairs({ { "class", 128 }, { "faction", 128 }, { "source", 150 }, { "school", 140 } }) do
+    end); self.resetButton:SetPoint("TOPLEFT", 358, -12)
+    local x = 14
+    for _, spec in ipairs({ { "class", 180 }, { "faction", 180 }, { "school", 160 } }) do
         local key = spec[1]
-        local b = button(content, "", spec[2], function(owner) self:Choose(key, owner) end)
-        b:SetPoint("TOPLEFT", x, -140); x = x + spec[2] + 12
-        self.filterButtons[key] = b
+        local b = button(panel, "", spec[2], function(owner) self:Choose(key, owner) end)
+        b:SetPoint("TOPLEFT", x, -57); x = x + spec[2] + 12; self.filterButtons[key] = b
     end
+    local comparison = font(panel, 11, { 0.65, 0.73, 0.80 })
+    comparison:SetPoint("TOPLEFT", 14, -116); comparison:SetText("Optional historical comparison:")
+    self.classicButton = button(panel, "Use Classic reference", 164, function()
+        if self.selected then ns.Equipped:Manual(self.selected.item.itemID, self.selected.item.variant, true) end
+    end); self.classicButton:SetPoint("TOPLEFT", 224, -106)
+
     self.listPane, self.detailPane = pane(content), pane(content)
-    self.listCaption = font(self.listPane, 12, ACCENT); self.listCaption:SetPoint("TOPLEFT", 12, -12)
-    self.detailCaption = font(self.detailPane, 12, ACCENT); self.detailCaption:SetPoint("TOPLEFT", 12, -12); self.detailCaption:SetText("HOW TO GET IT")
+    self.listCaption = font(self.listPane, 16); self.listCaption:SetHeight(27)
+    self.upgrades = button(self.listPane, "", 134, function() self:SetFilter("upgradesOnly", not self.settings.filters.upgradesOnly) end)
+    self.filterButtons.sort = button(self.listPane, "", 134, function(owner) self:Choose("sort", owner) end)
+    self.detailCaption = font(self.detailPane, 13, ACCENT); self.detailCaption:SetPoint("TOPLEFT", 14, -14); self.detailCaption:SetText("HOW TO GET IT")
     self.listScroll, self.detailScroll = scroll(self.listPane), scroll(self.detailPane)
-    self.empty = font(self.listPane, 13, { 0.76, 0.80, 0.85 })
-    self.empty:SetPoint("TOPLEFT", 16, -60); self.empty:SetPoint("RIGHT", -16, 0)
-    self.detailTitle = font(self.detailScroll.child, 17)
-    self.detailTitle:SetPoint("TOPLEFT", 0, 0); self.detailTitle:SetHeight(48)
-    self.detailText = font(self.detailScroll.child, 12)
-    self.detailText:SetPoint("TOPLEFT", 0, -57)
-    self.manualButton = button(self.detailPane, "Use as baseline", 150, function()
+    self.empty = font(self.listPane, 14, { 0.76, 0.80, 0.85 }); self.empty:SetPoint("TOPLEFT", 16, -105); self.empty:SetPoint("RIGHT", -16, 0)
+    self.detailIcon = icon(self.detailScroll.child, 48); self.detailIcon:SetPoint("TOPLEFT", 0, 0)
+    self.detailTitle = font(self.detailScroll.child, 19); self.detailTitle:SetPoint("TOPLEFT", 60, 0); self.detailTitle:SetHeight(48)
+    self.detailStats = font(self.detailScroll.child, 16); self.detailStats:SetPoint("TOPLEFT", 0, -62); self.detailStats:SetHeight(50)
+    self.detailText = font(self.detailScroll.child, 14); self.detailText:SetPoint("TOPLEFT", 0, -124)
+    self.trackButton = button(self.detailPane, "Track this wand", 200, function() self:Track() end)
+    self.manualButton = button(self.detailPane, "Compare from this wand", 200, function()
         if self.selected then ns.Equipped:Manual(self.selected.item.itemID, self.selected.item.variant, false) end
     end)
-    self.classicButton = button(self.detailPane, "Use Classic reference", 164, function()
-        if self.selected then ns.Equipped:Manual(self.selected.item.itemID, self.selected.item.variant, true) end
+    self.evidenceButton = button(self.detailPane, "Evidence and requirements", 200, function()
+        self.evidenceExpanded = not self.evidenceExpanded; self:Refresh()
     end)
-    self.manualButton:SetPoint("BOTTOMLEFT", 12, 45); self.classicButton:SetPoint("BOTTOMLEFT", 12, 12)
-    local footer = font(content, 10, { 0.68, 0.73, 0.78 })
-    footer:SetPoint("BOTTOMLEFT", 18, 12); footer:SetPoint("RIGHT", -75, 0); footer:SetHeight(24)
-    footer:SetText("Sample catalog - acquisition paths are unverified. Gains describe base wand DPS, not total character damage.")
-    local resize = button(content, "Resize", 55, function() end); resize:SetPoint("BOTTOMRIGHT", -10, 10)
+    self.goalButton = button(content, "Tracked goal", 210, function() self:SelectGoal() end)
+    self.goalButton:SetPoint("BOTTOMRIGHT", -86, 8); self.goalButton:Hide()
+    self.footer = font(content, 10, { 0.68, 0.76, 0.81 }); self.footer:SetPoint("BOTTOMLEFT", 18, 11); self.footer:SetHeight(24)
+    self.footer:SetText("Hover: item tooltip  |  Shift-click: link in chat\nGains compare base wand DPS. Sample catalog.")
+    local resize = button(content, "Resize", 55, function() end); resize:SetPoint("BOTTOMRIGHT", -10, 8)
     resize:SetScript("OnMouseDown", function() w:StartSizing("BOTTOMRIGHT") end)
     resize:SetScript("OnMouseUp", function() w:StopMovingOrSizing(); self:SaveWindow() end)
     w:SetScript("OnSizeChanged", function() self:Layout(); self:Refresh() end)
     w:SetScript("OnShow", function() self:Layout(); self:Refresh() end)
     w:SetScript("OnHide", function()
-        w:StopMovingOrSizing(); self:SaveWindow()
+        w:StopMovingOrSizing(); self:SaveWindow(); self.filtersPanel:Hide()
         if self.popup then self.popup:Hide() end
-        if rawget(_G, "GameTooltip") then GameTooltip:Hide() end
+        ns.ItemPresentation.HideTooltip()
     end)
-    w:SetScript("OnMouseDown", function() if self.popup then self.popup:Hide() end end)
+    w:SetScript("OnMouseDown", function() self.filtersPanel:Hide(); if self.popup then self.popup:Hide() end end)
     if type(UISpecialFrames) == "table" then UISpecialFrames[#UISpecialFrames + 1] = "WanderfulGuide" end
+    w:RegisterEvent("MODIFIER_STATE_CHANGED")
+    w:SetScript("OnEvent", ns.ItemPresentation.ModifiersChanged)
     self:Layout()
     return true
 end
 function Guide:Layout()
     if not self.window then return end
     local width = self.window:GetWidth()
-    local rightWidth = math.max(235, math.min(360, width * 0.35))
+    local rightWidth = math.max(285, math.min(370, width * 0.33))
     self.listPane:ClearAllPoints(); self.detailPane:ClearAllPoints()
-    self.listPane:SetPoint("TOPLEFT", self.content, "TOPLEFT", 18, -182)
-    self.listPane:SetPoint("BOTTOMRIGHT", self.content, "BOTTOMRIGHT", -rightWidth - 30, 44)
-    self.detailPane:SetPoint("TOPRIGHT", self.content, "TOPRIGHT", -18, -182)
-    self.detailPane:SetPoint("BOTTOMRIGHT", self.content, "BOTTOMRIGHT", -18, 44)
-    self.detailPane:SetWidth(rightWidth)
-    for _, spec in ipairs({ { self.listScroll, self.listPane, 14 }, { self.detailScroll, self.detailPane, 87 } }) do
-        local s, parent, bottom = unpack(spec)
-        s:ClearAllPoints(); s:SetPoint("TOPLEFT", parent, "TOPLEFT", 12, -38)
-        s:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -23, bottom)
-        s.child:SetWidth(math.max(1, parent:GetWidth() - 35))
+    self.listPane:SetPoint("TOPLEFT", self.content, "TOPLEFT", 18, -176)
+    self.listPane:SetPoint("BOTTOMRIGHT", self.content, "BOTTOMRIGHT", -rightWidth - 30, 42)
+    self.detailPane:SetPoint("TOPRIGHT", self.content, "TOPRIGHT", -18, -176)
+    self.detailPane:SetPoint("BOTTOMRIGHT", self.content, "BOTTOMRIGHT", -18, 42); self.detailPane:SetWidth(rightWidth)
+    local narrow = self.listPane:GetWidth() < 620
+    self.listCaption:ClearAllPoints(); self.listCaption:SetPoint("TOPLEFT", 14, -12)
+    self.listCaption:SetWidth(math.max(1, self.listPane:GetWidth() - (narrow and 28 or 310)))
+    self.upgrades:ClearAllPoints(); self.filterButtons.sort:ClearAllPoints()
+    self.filterButtons.sort:SetPoint("TOPRIGHT", -14, narrow and -43 or -12)
+    if narrow then self.upgrades:SetPoint("TOPLEFT", 14, -43)
+    else self.upgrades:SetPoint("RIGHT", self.filterButtons.sort, "LEFT", -10, 0) end
+    for _, spec in ipairs({ { self.listScroll, self.listPane, 14, narrow and 84 or 50 },
+        { self.detailScroll, self.detailPane, 124, 46 } }) do
+        local s, parent, bottom, top = unpack(spec)
+        s:ClearAllPoints(); s:SetPoint("TOPLEFT", parent, "TOPLEFT", 14, -top)
+        s:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", -24, bottom)
+        s.child:SetWidth(math.max(1, parent:GetWidth() - 38))
     end
-    local dw = math.max(1, rightWidth - 35)
-    self.detailTitle:SetWidth(dw); self.detailText:SetWidth(dw)
+    local dw = math.max(1, rightWidth - 38)
+    self.detailTitle:SetWidth(dw - 60); self.detailStats:SetWidth(dw); self.detailText:SetWidth(dw)
+    for i, b in ipairs({ self.trackButton, self.manualButton, self.evidenceButton }) do
+        b:ClearAllPoints(); b:SetPoint("BOTTOMLEFT", 14, 86 - (i - 1) * 35); b:SetWidth(rightWidth - 28)
+    end
+    self.filtersPanel:SetWidth(math.min(660, width - 36))
+    self.footer:SetWidth(math.max(1, width - (self.settings.goal and 326 or 100)))
 end
 function Guide:Row(index)
     if self.pool[index] then return self.pool[index] end
-    local b = CreateFrame("Button", nil, self.listScroll.child)
-    b:SetHeight(113)
-    b.marker = b:CreateTexture(nil, "BACKGROUND"); b.marker:SetColorTexture(unpack(ACCENT))
-    b.marker:SetPoint("TOPLEFT", 0, -3); b.marker:SetPoint("BOTTOMLEFT", 0, 3); b.marker:SetWidth(2)
-    b.name = font(b, 14); b.name:SetPoint("TOPLEFT", 10, -5); b.name:SetHeight(33)
-    b.stats = font(b, 12); b.stats:SetPoint("TOPLEFT", 10, -40); b.stats:SetHeight(31)
-    b.access = font(b, 11, { 0.73, 0.78, 0.84 }); b.access:SetPoint("TOPLEFT", 10, -72); b.access:SetHeight(15)
-    b.source = font(b, 11, { 0.60, 0.68, 0.76 }); b.source:SetPoint("TOPLEFT", 10, -89); b.source:SetHeight(18)
-    b:SetHighlightTexture("Interface\\Buttons\\WHITE8X8"); b:GetHighlightTexture():SetAlpha(0.04)
+    local b = CreateFrame("Button", nil, self.listScroll.child); b:SetHeight(190)
+    b.surface = surface(b, false)
+    self.glass.SetSurfaceTint(b.surface, 0.045, 0.063, 0.080, 0.92)
+    self.glass.SetWash(b.surface, 0); self.glass.SetEdge(b.surface, 0, 0, 0)
+    self.glass.SetSurfaceAlpha(b.surface, "shadow", 0)
+    b.icon = icon(b.surface.top, 52); b.icon:SetPoint("TOPLEFT", 14, -14)
+    b.name = font(b.surface.top, 17); b.name:SetPoint("TOPLEFT", 79, -12); b.name:SetHeight(42)
+    b.equip = font(b.surface.top, 12, { 0.72, 0.81, 0.87 }); b.equip:SetPoint("TOPLEFT", 79, -57); b.equip:SetHeight(18)
+    b.stats = font(b.surface.top, 18); b.stats:SetPoint("TOPLEFT", 14, -83); b.stats:SetHeight(24)
+    b.gain = font(b.surface.top, 15); b.gain:SetPoint("TOPLEFT", 14, -111); b.gain:SetHeight(21)
+    b.access = font(b.surface.top, 12, { 0.83, 0.73, 0.49 }); b.access:SetPoint("TOPLEFT", 14, -135); b.access:SetHeight(17)
+    b.source = font(b.surface.top, 12, { 0.70, 0.79, 0.85 }); b.source:SetPoint("TOPLEFT", 14, -155); b.source:SetHeight(29)
+    b:SetHighlightTexture("Interface\\Buttons\\WHITE8X8"); b:GetHighlightTexture():SetAlpha(0.035)
     b:SetScript("OnClick", function()
-        self.detailScroll.slider:SetValue(0)
-        self.selectedKey = b.row.item.itemID .. ":" .. b.row.item.variant
-        self:Refresh()
+        if ns.ItemPresentation.Link(b.row.item.itemID) then return end
+        self.filtersPanel:Hide(); if self.popup then self.popup:Hide() end
+        self.detailScroll.slider:SetValue(0); self.evidenceExpanded = false; self.pinnedSelection = nil
+        self.selectedKey = b.row.item.itemID .. ":" .. b.row.item.variant; self:Refresh()
     end)
-    b:SetScript("OnEnter", function()
-        local t = rawget(_G, "GameTooltip")
-        if not t or not b.row then return end
-        t:SetOwner(b, "ANCHOR_RIGHT"); t:SetText(b.row.item.name)
-        t:AddLine(b.stats:GetText(), 1, 1, 1, true)
-        t:AddLine(M.Equip(b.row) .. " / " .. M.Access(b.row), 0.8, 0.85, 0.9, true)
-        t:AddLine("Select for full acquisition paths and evidence.", 0.6, 0.85, 0.8, true); t:Show()
-    end)
-    b:SetScript("OnLeave", function() if rawget(_G, "GameTooltip") then GameTooltip:Hide() end end)
+    b.icon:SetScript("OnClick", function() b:GetScript("OnClick")(b) end)
+    b:SetScript("OnEnter", function() ns.ItemPresentation.Tooltip(b, b.row.item.itemID) end)
+    b:SetScript("OnLeave", ns.ItemPresentation.HideTooltip)
     self.pool[index] = b
     return b
 end
@@ -274,56 +354,100 @@ function Guide:Refresh()
     local filters = M.Filters(self.settings, context)
     if self.settings.filters.class == "all" then context.classID = nil end
     if self.settings.filters.faction == "all" then context.faction = nil end
-    self.rows = ns.Comparison.List(ns.WandData, state.snapshot, context, filters)
-    self.baseline:SetText(M.Baseline(ns.WandData, state))
+    self.rows = M.Browse(ns.Comparison.List(ns.WandData, state.snapshot, context, filters), self.settings.filters)
+    local character = M.Character(_G, state.level)
+    self.character:SetText((state.level and ("Level " .. state.level) or "Level unknown") .. " "
+        .. (character.className or "Caster") .. "\n" .. (character.faction or "Faction unknown"))
+    local info = paintIcon(self.baselineIcon, state.itemID)
+    local baseline = M.Baseline(ns.WandData, state)
+    if state.mode == "automatic" and info.name then
+        baseline = baseline:gsub("Item " .. state.itemID, function() return info.name end)
+    end
+    self.baseline:SetText(baseline)
+    self.autoButton.label:SetText(state.mode == "manual" and "Reset to equipped" or "Equipped baseline")
     self.rendered = { itemID = state.itemID, mode = state.mode, status = state.status, provenance = state.provenance }
     if not self.minBox:HasFocus() then self.minBox:SetText(tostring(filters.minLevel)) end
     if not self.maxBox:HasFocus() then self.maxBox:SetText(tostring(filters.maxLevel)) end
-    self.upgrades.label:SetText(self.settings.filters.upgradesOnly and "Upgrades only: on" or "All wands")
+    if self.search:GetText() ~= self.settings.filters.search then self.search:SetText(self.settings.filters.search) end
+    self.searchHint:SetShown(self.settings.filters.search == "")
+    self.upgrades.label:SetText(self.settings.filters.upgradesOnly and "[x] Upgrades only" or "[ ] Upgrades only")
     for key, b in pairs(self.filterButtons) do
         for _, option in ipairs(OPTIONS[key]) do
             if option[1] == self.settings.filters[key] then b.label:SetText(option[2] .. "  v") end
         end
     end
-    self.listCaption:SetText("WANDS BY EQUIP LEVEL  -  " .. #self.rows)
+    local active = self.settings.filters.school ~= "all" or self.settings.filters.class ~= "player"
+        or self.settings.filters.faction ~= "player" or self.settings.filters.minLevel or self.settings.filters.maxLevel
+    self.filtersButton.label:SetText(active and "Filters *" or "Filters")
+    self.listCaption:SetText("Wands for your next levels  (" .. #self.rows .. ")")
     self.selected = nil
     for _, row in ipairs(self.rows) do
         if row.item.itemID .. ":" .. row.item.variant == self.selectedKey then self.selected = row; break end
     end
+    if not self.selected and self.pinnedSelection == self.selectedKey then
+        for _, item in ipairs(ns.WandData.items) do
+            if item.itemID .. ":" .. item.variant == self.selectedKey then
+                self.selected = { item = item, comparison = ns.Comparison.Compare(item.forever, state.snapshot),
+                    eligibility = ns.Comparison.Assess(ns.WandData, item, context, {}) }
+                break
+            end
+        end
+    end
     self.selected = self.selected or self.rows[1]
     self.selectedKey = self.selected and (self.selected.item.itemID .. ":" .. self.selected.item.variant) or nil
-    for _, b in ipairs(self.pool) do b:Hide() end
+    local area = self.listScroll.child:GetWidth()
+    self.columns = area >= 570 and 2 or 1
+    local cardWidth = (area - (self.columns - 1) * 12) / self.columns
+    for i, b in ipairs(self.pool) do if i > #self.rows then b:Hide() end end
     for i, row in ipairs(self.rows) do
-        local b = self:Row(i); b.row = row
-        b:ClearAllPoints(); b:SetPoint("TOPLEFT", 0, -(i - 1) * 113); b:SetWidth(self.listScroll.child:GetWidth())
-        local stats = row.item.forever.stats
-        for _, field in ipairs({ "name", "stats", "access", "source" }) do b[field]:SetWidth(math.max(1, b:GetWidth() - 21)) end
-        b.name:SetText(row.item.name)
-        b.stats:SetText("Lvl " .. (stats.equipLevel or "?") .. "  " .. (stats.school or "?") .. "  "
-            .. (row.comparison.candidate.value and string.format("%.2f DPS", row.comparison.candidate.value) or "DPS unknown")
-            .. "\n" .. M.Gain(row.comparison))
-        b.access:SetText(M.Equip(row) .. " / " .. M.Access(row))
-        local paths = row.eligibility.sources
-        b.source:SetText(paths[1] and (paths[1].source.description .. (#paths > 1 and (" (+" .. (#paths - 1) .. " route)") or "")) or "No source recorded")
-        b.marker:SetShown(row == self.selected)
-        b.name:SetTextColor(unpack(row == self.selected and ACCENT or { 0.91, 0.93, 0.96 }))
+        local b = self:Row(i); b.row, b.itemID = row, row.item.itemID
+        b:ClearAllPoints(); b:SetPoint("TOPLEFT", ((i - 1) % self.columns) * (cardWidth + 12), -math.floor((i - 1) / self.columns) * 202)
+        b:SetWidth(cardWidth)
+        local stats, meta = row.item.forever.stats, paintIcon(b.icon, row.item.itemID)
+        b.name:SetWidth(math.max(1, cardWidth - 93)); b.equip:SetWidth(math.max(1, cardWidth - 93))
+        for _, field in ipairs({ "stats", "gain", "access", "source" }) do b[field]:SetWidth(math.max(1, cardWidth - 28)) end
+        b.name:SetText(row.item.name); b.name:SetTextColor(unpack(meta.color))
+        local equip, badge = M.EquipLabel(row, state.level)
+        b.equip:SetText(equip)
+        b.stats:SetText((row.comparison.candidate.value and string.format("%.2f DPS", row.comparison.candidate.value) or "DPS unknown")
+            .. "  -  " .. (stats.school or "School unknown"))
+        b.gain:SetText(M.Gain(row.comparison)); b.gain:SetTextColor(unpack(row.comparison.relation == "upgrade"
+            and { 0.34, 0.91, 0.48 } or { 0.74, 0.81, 0.86 }))
+        local goal = self.settings.goal
+        local tracked = goal and goal.itemID == row.item.itemID and goal.variant == row.item.variant
+        b.access:SetText(badge .. (tracked and " - Tracked" or ""))
+        b.source:SetText(M.SourceSummary(row))
+        self.glass.SetSurfaceRim(b.surface, unpack(row == self.selected
+            and { 0.24, 0.73, 0.75, 0.65 } or { 0.36, 0.47, 0.55, 0.22 }))
         b:Show()
     end
-    self.listScroll.child:SetHeight(math.max(1, #self.rows * 113))
+    self.listScroll.child:SetHeight(math.max(1, math.ceil(#self.rows / self.columns) * 202))
     self.empty:SetShown(#self.rows == 0)
     self.empty:SetText(state.snapshot == nil and filters.upgradesOnly
-        and "A baseline is needed for upgrade comparisons. Turn off Upgrades only to browse, or use equipped detection."
-        or "No matching wands. Widen the level range or reset the filters.")
-    local title, text = M.Details(ns.WandData, self.selected)
-    self.detailTitle:SetText(title); self.detailText:SetText(text)
+        and "A baseline is needed for upgrade comparisons. Turn off Upgrades only to browse, or choose a wand to compare from."
+        or "No matching wands. Clear search or open Filters to widen the range or reset your choices.")
+    local chosen = self.selected
+    self.detailTitle:SetText(chosen and chosen.item.name or "Choose a wand")
+    local meta = paintIcon(self.detailIcon, chosen and chosen.item.itemID)
+    self.detailIcon:SetShown(chosen ~= nil); self.detailTitle:SetTextColor(unpack(meta.color))
+    self.detailStats:SetText(chosen and ((chosen.comparison.candidate.value and string.format("%.2f DPS", chosen.comparison.candidate.value) or "DPS unknown")
+        .. " - " .. (chosen.item.forever.stats.school or "School unknown") .. "\n" .. M.Gain(chosen.comparison)) or "")
+    self.detailText:SetText(M.Acquisition(ns.WandData, chosen, state.level, self.evidenceExpanded))
     self.detailText:SetHeight(self.detailText:GetStringHeight() + 6)
-    self.detailScroll.child:SetHeight(63 + self.detailText:GetStringHeight())
-    self.manualButton:Enable(); self.classicButton:Enable()
-    self.glass.SetSurfaceEnabled(self.manualButton.surface, self.selected ~= nil)
-    self.glass.SetSurfaceEnabled(self.classicButton.surface, self.selected ~= nil and self.selected.item.classic ~= nil)
-    if not self.selected then self.manualButton:Disable() end
-    if not self.selected or not self.selected.item.classic then self.classicButton:Disable() end
+    self.detailScroll.child:SetHeight(130 + self.detailText:GetStringHeight())
+    local goal = self.settings.goal
+    self.trackButton.label:SetText(chosen and goal and goal.itemID == chosen.item.itemID and goal.variant == chosen.item.variant
+        and "Stop tracking this wand" or "Track this wand")
+    self.evidenceButton.label:SetText(self.evidenceExpanded and "Hide evidence and requirements" or "Evidence and requirements")
+    for _, b in ipairs({ self.manualButton, self.trackButton, self.evidenceButton, self.classicButton }) do
+        local enabled = chosen ~= nil and (b ~= self.classicButton or chosen.item.classic ~= nil)
+        self.glass.SetSurfaceEnabled(b.surface, enabled); if enabled then b:Enable() else b:Disable() end
+    end
+    self.goalButton:SetShown(goal ~= nil)
+    if goal then self.goalButton.label:SetText("Goal: " .. M.Name(ns.WandData, goal.itemID, goal.variant)) end
+    self.footer:SetWidth(math.max(1, self.window:GetWidth() - (goal and 326 or 100)))
     clampScroll(self.listScroll); clampScroll(self.detailScroll)
+    ns.ItemPresentation.ValidateOwner()
 end
 function Guide:Toggle()
     if not self:Ensure() then return end
@@ -333,7 +457,8 @@ function Guide:Open() if self:Ensure() then self.window:Show(); self:Refresh() e
 function Guide:State()
     local s = { ready = self.ready == true, shown = self.window ~= nil and self.window:IsShown(),
         loadedRevision = self.loadedRevision, revision = self.settings and self.settings.revision,
-        signature = self.settings and M.Signature(self.settings), rows = #self.rows }
+        signature = self.settings and M.Signature(self.settings), rows = #self.rows,
+        selectedKey = self.selectedKey, trackedItemID = self.settings and self.settings.goal and self.settings.goal.itemID }
     if self.rendered then
         s.renderedItemID, s.renderedMode, s.renderedStatus = self.rendered.itemID, self.rendered.mode, self.rendered.status
     end

@@ -34,7 +34,10 @@ if type(CreateFrame) == "function" then
         frame:SetScript("OnEvent", function(_, event, ...)
             if event == "ADDON_LOADED" then
                 if (...) == ns.name then WanderfulDB = ns.Guide:Initialize(rawget(_G, "WanderfulDB")) end
-            else ns.Equipped:Event(event, ...) end
+            else
+                ns.Equipped:Event(event, ...)
+                if event == "ITEM_DATA_LOAD_RESULT" or event == "GET_ITEM_INFO_RECEIVED" then ns.Guide:Refresh() end
+            end
         end)
     else ns.Equipped.loadsAvailable = false end
 else ns.Equipped.loadsAvailable = false end

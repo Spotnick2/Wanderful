@@ -17,6 +17,14 @@ records. After `pwsh Tools/deploy.ps1 -Probe` and `/reload`, run:
   captures expected settings, requires a full client exit and relaunch, then checks the
   settings adopted at ADDON_LOADED and asks for a visible comparison.
 
+The current definitions are revision 2 for the Browse Wands UX follow-up. ui now covers native
+item tooltips, Shift comparison/linking, responsive cards, search/sort, the Filters panel,
+explicit comparison and separate tracking. The empty step explains that replacing a wand
+does not produce an empty slot, and its pending text shows the rendered status and item ID.
+uisave revision 2 requires a tracked wand as well as a deliberate settings change; the captured
+signature includes search, sort and the goal. Re-run those procedures on the new deployment
+before claiming the added UI/tracking paths passed in game.
+
 The host cannot tell a reload from a full exit. The uisave record therefore includes an explicit
 owner confirmation; the numeric comparison alone does not establish process-restart persistence.
 Keep the captured size, position and filters unchanged until the post-restart comparison.

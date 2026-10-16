@@ -9,7 +9,7 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 $HostRoot = if ($env:FOREVERPROBE) { $env:FOREVERPROBE } else {
     Join-Path (Split-Path -Parent $RepoRoot) "ForeverProbe"
 }
-$RuntimeFiles = @("Wanderful.toc", "Core.lua", "Catalog.lua", "Comparison.lua", "Data\Wands.lua", "GuideModel.lua", "UI.lua", "Equipment.lua", "Runtime.lua")
+$RuntimeFiles = @("Wanderful.toc", "Core.lua", "Catalog.lua", "Comparison.lua", "Data\Wands.lua", "GuideModel.lua", "ItemPresentation.lua", "UI.lua", "Equipment.lua", "Runtime.lua")
 $ProbeFiles = @("WanderfulProbe.toc", "Measurements.lua", "Adapter.lua", "GuideChecks.lua", "WanderfulProbe.lua")
 $ProbeRoot = Join-Path $PSScriptRoot "WanderfulProbe"
 if (-not (Test-Path -LiteralPath $AddOnsPath -PathType Container)) {

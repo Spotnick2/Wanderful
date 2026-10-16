@@ -2,38 +2,57 @@
 
 A wand upgrade guide in development for casters leveling in **World of Warcraft: Forever**.
 
-`/wanderful` opens a movable, resizable guide with a level-sorted wand list and acquisition
-details. It compares the equipped wand or an explicit manual baseline using absolute and
-percentage **base wand DPS** gains. The nine-wand sample is development data; acquisition
-paths are labeled unverified where evidence is incomplete.
+`/wanderful` opens Browse Wands: a movable, resizable window with item-icon cards and a
+persistent acquisition panel. Cards show equip level, base DPS, absolute/percentage gain, school
+and a source summary. The grid uses two columns when space allows and one in narrower windows.
+The nine-wand sample remains development data.
 
-Use the level range, class, faction, source, damage school and Upgrades only controls to narrow
-the list. Defaults follow your character's class, faction and level (five levels behind through
-15 ahead). Press Enter after editing a level; Follow my level restores the moving range.
-Select a wand for its source routes, requirements, notes and evidence. Use as baseline selects
-bundled Forever data; Use Classic reference explicitly selects historical data. Use equipped
-wand restores automatic detection. Filters, window size and position persist account-wide;
-manual baselines and whether the window is open are session-only.
+Search names or recorded sources, choose a source type, toggle Upgrades only, and sort by equip
+level, DPS or gain. Filters opens school, manual level range and character overrides; class,
+faction and nearby levels default from the character. Press Enter after editing a level.
+Follow my level restores the range from five levels behind through 15 ahead.
 
-Equip eligibility and source access are separate assessments. A numerical upgrade is not proof
-that you can obtain the item. Effects, attributes and character modifiers are not scored.
-See [catalog evidence](docs/CATALOG.md), [comparison semantics](docs/COMPARISONS.md) and
-[equipment detection](docs/EQUIPMENT.md) for limitations. The
-[roadmap](https://github.com/Spotnick2/Wanderful/issues/10) tracks catalog expansion and the future
-flowchart. This change is the list/details milestone (#6); in-game UI acceptance remains pending.
+Selecting a card keeps its acquisition instructions visible. Hover a card/icon for the native
+WoW item tooltip; Shift or the game's always-compare setting enables equipped-item comparison
+where supported. Shift-click inserts a cached item link into an open chat box. Item names,
+icons and quality colors use safe client metadata; that metadata never substitutes live tooltip
+stats for the catalog's comparison data.
+
+Compare from this wand explicitly selects a bundled Forever baseline. Reset to equipped returns
+to automatic detection. The optional Classic reference comparison is under Filters. Track this
+wand saves a goal separately; the Goal button returns to it without changing the filters or
+baseline, even if the card is hidden by the current filters. Search, sort, filters, tracked goal,
+window size and position persist account-wide. Manual baselines, selection and open/closed state
+remain session-only.
+
+The acquisition panel shows recorded source information and a quiet provenance line. Evidence
+and requirements expands the audit details and links. Unknown recipe materials, quest steps and
+locations are not invented from the mockups. Meeting an equip-level requirement does not establish
+source access; effects, attributes and character modifiers are not scored.
+
+The accepted UX direction has **Your Path** as the eventual default, with useful level milestones,
+an equipped/current-level marker, and optional alternatives. Browse Wands will share selection,
+filters, baseline, tracking and acquisition details with that view. This PR implements the Browse
+and shared-details milestone (#6). The progression view and recommendation rules remain in
+[#8](https://github.com/Spotnick2/Wanderful/issues/8), while acquisition data and the missing
+Novice's Practice Wand belong to [#7](https://github.com/Spotnick2/Wanderful/issues/7).
+
+See [catalog evidence](docs/CATALOG.md), [comparison semantics](docs/COMPARISONS.md),
+[equipment detection](docs/EQUIPMENT.md) and the
+[roadmap](https://github.com/Spotnick2/Wanderful/issues/10) for coverage and limitations.
 
 ## Client target and verification
 
 - TOC interface: **16001** (Forever 1.60.1).
 - Local API reference: **1.60.1.70425**.
 - In-game tested build for item APIs and the equipped adapter: **1.60.1.70425**, enUS.
-- The new guide has offline UI coverage; visual readability, scaling and settings after a full
-  client exit/relaunch still need the guided in-game run.
+- The original guide passed a full-exit settings check; the card UX and saved-goal additions
+  need their updated guided in-game run.
 
 The addon embeds **LibGlass r9**, MIT licensed, approved by the owner on 2026-10-16.
 Its license and media ship in `Libs/LibGlass-1.0`; no separate player installation is needed.
 The window follows `../References/LIBGLASS-WINDOW-STYLING.md`: reflective outer shell,
-continuous reading panes, quiet controls and full-opacity text. Shared library defaults stay
+continuous reading panes, darker cards, quiet controls and full-opacity text. Shared library defaults stay
 untouched. Saved settings are adopted only at Wanderful's own ADDON_LOADED.
 
 ## Development setup

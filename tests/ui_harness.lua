@@ -75,6 +75,7 @@ function U.New(saved)
     function methods.RegisterEvent(wd, event) wd.events[event] = true; return true end
     function methods.UnregisterEvent(wd, event) wd.events[event] = nil end
     function methods.SetScript(wd, name, fn) wd.scripts[name] = fn end
+    function methods.GetScript(wd, name) return wd.scripts[name] end
     function methods.Show(wd) local old = wd.shown; wd.shown = true; if not old then call(wd, "OnShow") end end
     function methods.Hide(wd) local old = wd.shown; wd.shown = false; if old then call(wd, "OnHide") end end
     function methods.SetShown(wd, value) if value then wd:Show() else wd:Hide() end end
@@ -88,7 +89,7 @@ function U.New(saved)
     function methods.SetGradient(wd, ...) wd.gradient = { ... } end
     function methods.SetAlpha(wd, value) wd.alpha = value end
     function methods.GetAlpha(wd) return wd.alpha or 1 end
-    function methods.SetText(wd, text) assert(type(text) == "string" or type(text) == "number"); wd.text = tostring(text) end
+    function methods.SetText(wd, text) assert(type(text) == "string" or type(text) == "number"); wd.text = tostring(text); call(wd, "OnTextChanged", false) end
     function methods.GetText(wd) return wd.text or "" end
     function methods.SetFont(wd, _, size) wd.fontSize = size end
     function methods.GetStringHeight(wd)
@@ -131,12 +132,22 @@ function U.New(saved)
     env.UnitClass = function() return "Mage", "MAGE", 8 end
     env.UnitRace = function() return "Human", "Human", 1 end
     env.UnitFactionGroup = function() return "Alliance", "Alliance" end
+    env.IsShiftKeyDown = function() return w.shift == true end
+    env.ChatEdit_InsertLink = function(link) w.insertedLink = link; return true end
+    env.C_CVar = { GetCVarBool = function() return w.alwaysCompare == true end }
+    env.GameTooltip_ShowCompareItem = function(tooltip) w.comparedTooltip = tooltip end
+    env.C_Item.GetItemIconByID = function(id) return w.secretIcon or (100000 + id) end
+    env.C_Item.GetItemInfo = function(id) return "Cached wand " .. id, "item:" .. id, 2 end
+    env.C_Item.GetItemQualityColor = function() return 0.1, 1, 0.1 end
     local ns = H.LoadRuntime(w)
+    env.GameTooltip = env.CreateFrame("GameTooltip", "GameTooltip", env.UIParent)
+    function env.GameTooltip:SetOwner(owner, anchor) self.owner, self.anchor = owner, anchor end
+    function env.GameTooltip:SetHyperlink(link) self.link = link end
     env.WanderfulDB = saved
     w.fire("ADDON_LOADED", "Wanderful")
     w.fire("PLAYER_LOGIN")
     w.ns, w.guide = ns, ns.Guide
-    function w.click(button) assert(button.enabled); call(button, "OnClick") end
+    function w.click(button) assert(button.enabled); call(button, "OnClick", "LeftButton") end
     return w
 end
 return U

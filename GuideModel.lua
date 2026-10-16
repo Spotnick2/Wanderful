@@ -4,6 +4,7 @@ ns.GuideModel = M
 local classes = { player = true, all = true, [5] = true, [8] = true, [9] = true }
 local factions = { player = true, all = true, Alliance = true, Horde = true }
 local sources = { all = true, quest = true, vendor = true, crafting = true, dungeon = true, world = true }
+local sorts = { level = true, dps = true, gain = true }
 local schools = { all = true, Arcane = true, Fire = true, Frost = true, Shadow = true, Holy = true, Nature = true, Physical = true }
 function M.Finite(v) return type(v) == "number" and v == v and v > -math.huge and v < math.huge end
 local function bounded(v, low, high, default)
@@ -13,14 +14,18 @@ end
 function M.Settings(saved)
     saved = type(saved) == "table" and saved.schemaVersion == 1 and saved or {}
     local w, f = type(saved.window) == "table" and saved.window or {}, type(saved.filters) == "table" and saved.filters or {}
-    return { schemaVersion = 1, revision = bounded(saved.revision, 0, 2147483647, 0),
+    local goal = type(saved.goal) == "table" and saved.goal or {}
+    local goalID = M.Finite(goal.itemID) and goal.itemID > 0 and goal.itemID % 1 == 0 and goal.itemID or nil
+    local search = type(f.search) == "string" and f.search:sub(1, 80) or ""
+    return { schemaVersion = 1, goal = goalID and { itemID = goalID,
+        variant = type(goal.variant) == "string" and goal.variant:sub(1, 64) or "base" } or nil, revision = bounded(saved.revision, 0, 2147483647, 0),
         window = { width = bounded(w.width, 640, 1600, 1040), height = bounded(w.height, 480, 1100, 680),
             x = bounded(w.x, -10000, 10000, 0), y = bounded(w.y, -10000, 10000, 0) },
         filters = { class = classes[f.class] and f.class or "player",
             faction = factions[f.faction] and f.faction or "player",
             source = sources[f.source] and f.source or "all", school = schools[f.school] and f.school or "all",
             minLevel = bounded(f.minLevel, 1, 100, nil), maxLevel = bounded(f.maxLevel, 1, 100, nil),
-            upgradesOnly = f.upgradesOnly == true } }
+            search = search, sort = sorts[f.sort] and f.sort or "level", upgradesOnly = f.upgradesOnly == true } }
 end
 function M.Character(env, level)
     local function plain(v)
@@ -33,7 +38,8 @@ function M.Character(env, level)
         return pcall(fn, ...)
     end
     local c = { level = level }
-    local ok, _, _, class = call(env.UnitClass, "player")
+    local ok, className, _, class = call(env.UnitClass, "player")
+    if ok and plain(className) and type(className) == "string" then c.className = className end
     if ok and plain(class) and M.Finite(class) then c.classID = class end
     local raceOK, _, _, race = call(env.UnitRace, "player")
     if raceOK and plain(race) and M.Finite(race) then c.raceID = race end
@@ -135,8 +141,87 @@ end
 function M.Signature(settings)
     local w, f = settings.window, settings.filters
     local fields = { w.width, w.height, w.x, w.y, f.class, f.faction, f.source, f.school,
-        f.minLevel or "auto", f.maxLevel or "auto", tostring(f.upgradesOnly) }
+        f.minLevel or "auto", f.maxLevel or "auto", tostring(f.upgradesOnly), f.search, f.sort,
+        settings.goal and settings.goal.itemID or "none", settings.goal and settings.goal.variant or "none" }
     for i, value in ipairs(fields) do fields[i] = tostring(value) end
     return table.concat(fields, "|")
+end
+function M.Browse(rows, filters)
+    local found, query = {}, (filters.search or ""):lower()
+    for _, row in ipairs(rows) do
+        local text = row.item.name
+        for _, route in ipairs(row.eligibility.sources) do text = text .. " " .. route.source.description end
+        if query == "" or text:lower():find(query, 1, true) then found[#found + 1] = row end
+    end
+    if filters.sort ~= "level" then
+        local rank = {}; for i, row in ipairs(found) do rank[row] = i end
+        table.sort(found, function(a, b)
+            local function value(row)
+                if filters.sort == "gain" then return row.comparison.delta end
+                return row.comparison.candidate.value
+            end
+            local av, bv = value(a), value(b)
+            if av == bv then return rank[a] < rank[b] end
+            if av == nil then return false end
+            if bv == nil then return true end
+            return av > bv
+        end)
+    end
+    return found
+end
+function M.EquipLabel(row, level)
+    local required = row.item.forever.stats.equipLevel
+    if required == nil then return "Equip level not recorded", "Level not recorded" end
+    local prefix = "Equip at level " .. required
+    if M.Finite(level) and required > level then
+        local n = required - level
+        return prefix, "In " .. n .. (n == 1 and " level" or " levels")
+    end
+    if row.eligibility.equip.status == "blocked" then return prefix, "Equip restrictions" end
+    return prefix, "Level requirement met"
+end
+function M.SourceSummary(row)
+    local route = row.eligibility.sources[1]
+    if not route then return "Source not recorded" end
+    local labels = { crafting = "Crafted", vendor = "Vendor", quest = "Quest", dungeon = "Dungeon drop", world = "World drop" }
+    return (labels[route.source.kind] or "Source") .. " - " .. route.source.description
+        .. (#row.eligibility.sources > 1 and (" (+" .. (#row.eligibility.sources - 1) .. " route)") or "")
+end
+function M.Acquisition(data, row, level, expanded)
+    if not row then return "Choose a wand to see how to get it." end
+    local equip, badge = M.EquipLabel(row, level)
+    local lines = { equip .. " - " .. badge, "" }
+    for _, route in ipairs(row.eligibility.sources) do
+        local s = route.source
+        local labels = { crafting = "CRAFTED", vendor = "VENDOR", dungeon = "DUNGEON DROP", quest = "QUEST REWARD", world = "WORLD DROP" }
+        lines[#lines + 1] = labels[s.kind] or "ACQUISITION"
+        lines[#lines + 1] = s.description
+        if s.minQuestLevel then lines[#lines + 1] = "Quest minimum: level " .. s.minQuestLevel .. " (separate from equip level)" end
+        if s.professionSkill then lines[#lines + 1] = "Required crafting skill: " .. s.professionSkill end
+        if s.faction then lines[#lines + 1] = s.faction .. " source" end
+        if s.availability == "unavailable" then lines[#lines + 1] = "This source is recorded as unavailable."
+        elseif s.availability == "test" then lines[#lines + 1] = "Test source; acquisition is not established."
+        elseif route.status == "blocked" then lines[#lines + 1] = "Known source requirements are not met." end
+        if s.notes then lines[#lines + 1] = s.notes end
+        local evidence = data.evidence[s.evidence]
+        lines[#lines + 1] = evidence.game == "classic" and "Classic reference; Forever source not verified."
+            or (evidence.method == "database" and "Forever database; source not verified in game." or "Source evidence: " .. evidence.method)
+        lines[#lines + 1] = ""
+    end
+    if #row.eligibility.sources == 0 then lines[#lines + 1] = "Acquisition information has not been recorded." end
+    lines[#lines + 1] = "YOUR NEXT STEP"
+    if badge:match("^In ") then
+        lines[#lines + 1] = "Reach level " .. row.item.forever.stats.equipLevel .. " to meet the level requirement."
+        lines[#lines + 1] = "You can plan the acquisition now; source requirements are separate."
+    else
+        lines[#lines + 1] = "Review the source and its requirements before planning this upgrade."
+    end
+    if expanded then
+        local _, details = M.Details(data, row)
+        lines[#lines + 1] = ""
+        lines[#lines + 1] = "EVIDENCE AND REQUIREMENTS"
+        lines[#lines + 1] = details
+    end
+    return table.concat(lines, "\n")
 end
 return M

@@ -6,8 +6,8 @@ if type(CreateFrame) == "function" then
     if ok and frame then
         for _, event in ipairs({ "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "PLAYER_EQUIPMENT_CHANGED",
             "PLAYER_LEVEL_UP", "PLAYER_REGEN_ENABLED", "ITEM_DATA_LOAD_RESULT", "GET_ITEM_INFO_RECEIVED" }) do
-            local registered = pcall(frame.RegisterEvent, frame, event)
-            if not registered and (event == "ITEM_DATA_LOAD_RESULT" or event == "GET_ITEM_INFO_RECEIVED") then
+            local ok, registered = pcall(frame.RegisterEvent, frame, event)
+            if (not ok or registered ~= true) and (event == "ITEM_DATA_LOAD_RESULT" or event == "GET_ITEM_INFO_RECEIVED") then
                 ns.Equipped.loadsAvailable = false
             end
         end

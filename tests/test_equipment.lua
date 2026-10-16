@@ -209,7 +209,7 @@ test("runtime registers events, exposes slash commands and labels manual mode", 
     env.print = function(text) messages[#messages + 1] = text end
     env.CreateFrame = function(kind)
         assert(kind == "Frame")
-        return { RegisterEvent = function(_, event) events[event] = true end,
+        return { RegisterEvent = function(_, event) events[event] = true; return true end,
             SetScript = function(_, key, fn) scripts[key] = fn end }
     end
     for line in io.lines("Wanderful.toc") do
@@ -219,6 +219,7 @@ test("runtime registers events, exposes slash commands and labels manual mode", 
         end
     end
     assert(events.PLAYER_LOGIN and events.ITEM_DATA_LOAD_RESULT and events.GET_ITEM_INFO_RECEIVED)
+    assert(runtimeNS.Equipped.loadsAvailable == true)
     scripts.OnEvent(nil, "PLAYER_LOGIN")
     env.SlashCmdList.WANDERFUL("baseline 11287")
     assert(messages[#messages]:find("/wanderful auto", 1, true))
@@ -249,5 +250,38 @@ test("a reentrant load callback cannot be overwritten by a request exception", f
     assert(f.adapter.state.status == "ready" and f.adapter.state.snapshot.stats.dps == 28)
     f.timers[1]()
     assert(f.adapter.state.snapshot.stats.dps == 28)
+end)
+test("runtime refuses loading when either load event returns false or throws", function()
+    for _, refusedEvent in ipairs({ "ITEM_DATA_LOAD_RESULT", "GET_ITEM_INFO_RECEIVED" }) do
+        for _, throws in ipairs({ false, true }) do
+            local f, runtimeNS, scripts = fixture(), { Equipment = ns.Equipment }, {}
+            f.dps = nil
+            runtimeNS.WandData = f.data
+            local env = setmetatable({}, { __index = _G })
+            for key, value in pairs(f.env) do env[key] = value end
+            env._G = env
+            env.CreateFrame = function()
+                return {
+                    RegisterEvent = function(_, event)
+                        if event == refusedEvent then
+                            if throws then error("registration refused") end
+                            return false
+                        end
+                        return true
+                    end,
+                    SetScript = function(_, key, fn) scripts[key] = fn end,
+                }
+            end
+            local chunk = assert(loadfile("Runtime.lua"))
+            setfenv(chunk, env)("Wanderful", runtimeNS)
+            assert(runtimeNS.Equipped.loadsAvailable == false, refusedEvent .. " refusal was ignored")
+            scripts.OnEvent(nil, "PLAYER_LOGIN")
+            local state = runtimeNS.Equipped.state
+            assert(state.status == "unavailable" and state.reason == "bounded_loading_unavailable")
+            assert(state.snapshot == nil and #f.requests == 0 and #f.timers == 0)
+            assert(runtimeNS.Equipped:Manual(11287, "base", false))
+            assert(runtimeNS.Equipped.state.provenance == "bundled")
+        end
+    end
 end)
 print("Equipment: " .. count .. " tests passed.")

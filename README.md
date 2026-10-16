@@ -66,7 +66,11 @@ show that literal version. Release preparation and package verification are trac
 Local reference projects, when available: `../References`, `../LibGlass`, and `../ForeverProbe`.
 Read `../References/PROBES.md` and `../ForeverProbe/docs/GUIDE.md` before adding probes.
 
-The development probe for item/quest APIs is now available. Run `pwsh tests/run.ps1`, then
+Runtime validation uses the guided ForeverProbe procedure: after deployment and /reload, run
+/fp steps wand adapter. Follow its panel through the save/reload step; no results need to be
+pasted from chat. The earlier API and tooltip procedures remain separate.
+
+The development probe for item/quest APIs is also available. Run `pwsh tests/run.ps1`, then
 `pwsh Tools/deploy.ps1 -Probe` and `/reload`. In game, `/fp steps wand check` starts the guided
 experiment. See [probe setup and evidence status](https://github.com/Spotnick2/Wanderful/blob/main/docs/FOREVER-PROBE.md).
 The first client run and visual follow-up are recorded there, including combat restrictions and

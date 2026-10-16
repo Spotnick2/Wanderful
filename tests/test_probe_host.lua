@@ -33,6 +33,7 @@ FP.Console = nil
 
 local ns = {}
 load("Tools/WanderfulProbe/Measurements.lua", "WanderfulProbe", ns)
+load("Tools/WanderfulProbe/Adapter.lua", "WanderfulProbe", ns)
 load("Tools/WanderfulProbe/WanderfulProbe.lua", "WanderfulProbe", ns)
 assert(rawget(env, "WanderfulProbeDB") == nil, "saved variables must not be made at file scope")
 env.WanderfulProbeDB = { log = {}, loads = 4 }
@@ -58,4 +59,57 @@ assert(record.results[1].notes[1] ~= nil)
 assert(record.results[2].status == "done" and record.results[4].check == "PASS")
 FP.Steps.Stop("test finished")
 assert(record.status == "stopped" and #w.chat == 0)
-print("Probe host integration: saved-variable timing, dispatch, log clearing and guided records passed.")
+-- Exercise the new procedure through the real updated host, including its wait backend.
+H.LoadRuntime(w)
+w.fire("PLAYER_LOGIN")
+env.SlashCmdList.FOREVERPROBE("steps wand adapter")
+local adapterRecord = assert(FP.db.steps.records["WanderfulProbe/adapter"])
+FP.Steps.Run() -- begin, switches to automatic
+FP.Steps.Poll() -- settled baseline
+assert(adapterRecord.at == 3 and adapterRecord.results[2].check == "PASS")
+FP.Steps.Note("removal event fixture")
+w.itemID = nil
+FP.Steps.Poll()
+assert(adapterRecord.at == 3, "host polling must not refresh stale adapter state")
+w.fire("PLAYER_EQUIPMENT_CHANGED", 18, false)
+FP.Steps.Poll()
+assert(adapterRecord.results[3].check == "PASS" and adapterRecord.results[3].notes[1])
+w.itemID = 100
+w.fire("PLAYER_EQUIPMENT_CHANGED", 18, true)
+FP.Steps.Poll()
+assert(adapterRecord.results[4].check == "PASS")
+FP.Steps.Skip() -- optional spare
+FP.Steps.Run() -- manual selection
+w.itemID = nil
+w.fire("PLAYER_EQUIPMENT_CHANGED", 18, false)
+FP.Steps.Poll()
+assert(adapterRecord.results[7].check == "PASS")
+FP.Steps.Run() -- historical selection
+w.itemID = 100
+FP.Steps.Run() -- automatic mode
+FP.Steps.Poll()
+assert(adapterRecord.results[10].check == "PASS")
+FP.Steps.Skip() -- optional combat encounter
+FP.Steps.Skip() -- optional combat sample
+FP.Steps.Poll() -- already out of combat; check live baseline
+assert(adapterRecord.at == 14 and adapterRecord.results[13].check == "PASS")
+-- Simulate a changed host run to test resume dispatch, not filesystem persistence.
+FP.run = FP.run + 1
+FP.Steps.Resume()
+assert(adapterRecord.at == 15 and adapterRecord.results[14].detail:find("run #", 1, true))
+FP.Steps.Next()
+assert(adapterRecord.status == "done" and adapterRecord.results[5].status == "skipped")
+assert(FP.db.steps.records["WanderfulProbe/check"] == record and record.status == "stopped")
+
+-- A missing equipment event times out as a saved FAIL, not a fabricated confirmation.
+env.SlashCmdList.FOREVERPROBE("steps wand adapter")
+local failedRecord = FP.db.steps.records["WanderfulProbe/adapter"]
+FP.Steps.Run()
+FP.Steps.Poll()
+assert(failedRecord.at == 3)
+w.now = w.now + 121
+FP.Steps.Poll()
+assert(failedRecord.results[3].status == "timeout" and failedRecord.results[3].check == "FAIL")
+FP.Steps.Stop("failure path checked")
+assert(#w.chat == 0 and not w.has("PRIVATE-CRAFT-NAME"))
+print("Probe host integration: saved-variable timing, dispatch, log clearing, adapter waits, failures and guided records passed.")

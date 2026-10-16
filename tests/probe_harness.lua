@@ -102,9 +102,32 @@ function H.New()
     local NS = {}
     local chunk = assert(loadfile("Tools/WanderfulProbe/Measurements.lua"))
     setfenv(chunk, env)("WanderfulProbe", NS)
+    local adapterChunk = assert(loadfile("Tools/WanderfulProbe/Adapter.lua"))
+    setfenv(adapterChunk, env)("WanderfulProbe", NS)
     w.env, w.Probe, w.NS = env, P, NS
     w.measure = NS.Measurements.New(P, env)
     return w
 end
 
+-- Load the actual runtime into the same environment used by probe/host tests.
+function H.LoadRuntime(w)
+    local env = w.env
+    w.itemID, w.dps, w.level = 100, 20, 15
+    env.UnitLevel = function() return w.level end
+    env.GetInventoryItemID = function(_, slot) if slot == 18 then return w.itemID end end
+    env.GetInventoryItemLink = function(_, slot)
+        if slot == 18 and w.itemID then return "item:" .. w.itemID .. ":PRIVATE-CRAFT-NAME" end
+    end
+    env.C_Item.GetItemInfoInstant = function() return w.itemID, nil, nil, nil, nil, 2, 19 end
+    env.C_Item.GetItemStats = function() return { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = w.dps } end
+    local ns = {}
+    for line in io.lines("Wanderful.toc") do
+        line = line:match("^%s*(.-)%s*$")
+        if line ~= "" and line:sub(1, 1) ~= "#" then
+            local chunk = assert(loadfile(line:gsub("\\", "/")))
+            setfenv(chunk, env)("Wanderful", ns)
+        end
+    end
+    return ns
+end
 return H

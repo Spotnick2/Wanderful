@@ -1,5 +1,23 @@
 local _, ns = ...
 ns.Equipped = ns.Equipment.New(_G, ns.WandData)
+-- A small addon API lets tools observe event-driven state without refreshing it.
+-- Return only copied scalar fields; equipped links and internal tables stay private.
+Wanderful = {
+    apiVersion = 1,
+    GetBaseline = function()
+        local state = ns.Equipped.state
+        return {
+            mode = state.mode, status = state.status, provenance = state.provenance,
+            itemID = state.itemID, variant = state.variant, reason = state.reason,
+            level = state.level, levelStatus = state.levelStatus,
+            dps = state.snapshot and ns.Comparison.DPS(state.snapshot).value,
+        }
+    end,
+    UseAutomaticBaseline = function() ns.Equipped:Automatic() end,
+    SelectManualBaseline = function(itemID, variant, historical)
+        return ns.Equipped:Manual(itemID, variant or "base", historical)
+    end,
+}
 -- Registration can differ by build; failed load-event registration disables requests.
 if type(CreateFrame) == "function" then
     local ok, frame = pcall(CreateFrame, "Frame")

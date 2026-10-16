@@ -80,18 +80,26 @@ Run pwsh tests/run.ps1. Adapter tests exercise replacement/removal, stale same/d
 responses, bounded requests, secret sentinels, malformed values, unavailable APIs, manual/
 historical selection, level events and real TOC/slash/event wiring.
 
-The adapter itself has not yet been exercised in-game. The prior probe run is API evidence,
-not an integration pass for this implementation. Before closing #5, deploy and record the
-actual build/locale and these results:
+The adapter itself has not yet been exercised through a completed guided run. The prior API
+probe is evidence for the API choices, not an integration pass for this implementation.
 
-1. /reload, then /wanderful: automatic/live identifies the equipped wand and expected item DPS.
-2. Remove, equip and replace a wand, checking /wanderful each time. Empty must have no DPS;
-   replacement must never retain the previous item's DPS.
-3. Select /wanderful baseline 11287, change equipment, and check it remains manual/bundled.
-   Select /wanderful historical 11287 and verify historical is explicit.
-4. /wanderful auto restores the equipped item. Try status in and after combat; unreadable
-   values must show restricted/unknown rather than a previous live baseline or zero upgrade.
-5. If an uncached equipped item is available, observe loading then ready/unknown within the
-   deadline. Warm-cache checks alone do not establish uncached behavior.
-6. Capture errors or differences and build/locale in the PR. No raw character links/logs need
-   to be committed. Level-up and non-base variants remain unverified unless exercised.
+For the in-game validation, use /fp steps wand adapter after deploying with -Probe and reloading.
+The panel guides removal/restoration, optional replacement, explicit manual/historical
+selection and optional combat. It records build/locale, observations, checks, skips and notes.
+Follow the panel through its reload step; results are read from local SavedVariables, not
+pasted from chat. See docs/FOREVER-PROBE.md for the collection and interpretation details.
+Do not replace this procedure with a manual chat checklist.
+
+Runtime.lua exposes the version-1 Wanderful API:
+- GetBaseline() returns a fresh scalar view of the stored mode, status, provenance, item ID,
+  variant, DPS, reason and level. It performs no client read or refresh and exposes no link,
+  snapshot table or mutable adapter object.
+- SelectManualBaseline(itemID, variant, historical) explicitly selects a session baseline.
+- UseAutomaticBaseline() explicitly discards manual selection and retries equipped detection.
+
+The probe uses these actions without chat output. Its independent client reads are separate
+from the passive observation, so a missing equipment event remains observable. The facade
+adds no runtime dependency on ForeverProbe.
+
+Full-link variants, level-up behavior and truly uncached equipment still need client coverage
+when those scenarios can be exercised; a warm-cache pass does not establish them.

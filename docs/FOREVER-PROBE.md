@@ -5,6 +5,58 @@ WOW_PROJECT_ID 18**. This work is part of #3. The run used check revision 1; rev
 visibility of visual comparisons. The subsequent verify procedure completed successfully with
 two visual matches. Original yes/no responses about unseen logs are not accepted as evidence.
 
+## Runtime adapter procedure (#5)
+
+Use /fp steps wand adapter for the runtime validation. The panel records context, checks and
+notes; no chat checklist or pasted output is required. This procedure is separate from check
+(API experiments) and verify (visual tooltip comparisons), so it preserves those records.
+
+Enable Wanderful, ForeverProbe and WanderfulProbe, deploy with -Probe, then /reload. Equip a
+wand out of combat and start the adapter procedure. Follow its buttons and equipment prompts.
+Skip the spare-wand/combat actions when unavailable. The panel waits for equipment state and
+writes PASS/FAIL details automatically. Finish through its reload step; after the owner reports
+completion, read WanderfulProbe.lua and ForeverProbe.lua locally.
+
+The procedure:
+- compares the stored automatic baseline with a separate client read;
+- checks removal, original-wand restoration and optional replacement;
+- selects explicit bundled and historical baselines, and verifies manual selection survives
+  an equipment change;
+- restores automatic mode and records optional combat/postcombat comparisons.
+
+Wanderful.GetBaseline() observes a copied, scalar-only view without refreshing the adapter.
+The probe never calls the product slash command or Refresh while waiting for equipment changes.
+Independent item queries can warm cache data, so this procedure does not claim a forced cold
+cache or every asynchronous timing path. Same-ID late responses, restricted sentinels and
+deadlines are also covered offline. Level-up and non-base variants remain unmeasured unless
+separately exercised. A restricted client read paired with an unchanged ready runtime baseline
+is recorded as FAIL, not assumed safe from the earlier public-item probe.
+
+The wait step's pending details appear in the host panel. There is no question asking the owner
+to inspect hidden logs. All runtime evidence is numeric/scalar text: no full equipped link,
+maker name, player identity or raw API table is stored. The read-only API is versioned;
+missing/older Wanderful produces an explicit setup error. Manual/automatic actions deliberately
+change the session's selected baseline. Finish restores automatic mode; if stopping earlier,
+use /wanderful auto when ready to discard a manual selection.
+
+Offline validation loads the actual runtime and the updated private host into the same stubs.
+It exercises real command dispatch, the host wait backend, saved PASS/FAIL, skips and notes,
+and simulated reload-resume dispatch. That simulation is not a filesystem persistence test.
+Probe files remain excluded from the player package. The runtime API has no ForeverProbe
+dependency.
+
+### Owner-supplied chat excerpt before the guided procedure
+
+The owner supplied output from 17:06:14 through 17:07:54: automatic/live item 11287 displayed
+11.33 DPS; automatic then reported empty/DPS unknown; manual/bundled displayed 11.33 and
+manual/historical displayed 11.30; returning to automatic reported empty again. The manual
+messages explicitly identified the mode and the auto command.
+
+This is partial owner-reported evidence only. No build/locale, independent inventory view,
+replacement, manual-survival equipment change, or combat outcome was supplied. The final
+empty result is not itself evidence of a failure or of successful re-equipping. It does not
+complete #5. The adapter procedure above supplies the missing repeatable collection workflow.
+
 ## Setup and validation
 
 The host contract is the sibling ForeverProbe checkout's docs/GUIDE.md. It remains a private,

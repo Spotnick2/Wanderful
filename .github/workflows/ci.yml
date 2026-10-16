@@ -32,6 +32,7 @@ jobs:
           lua5.1 tests/test_probe_manifest.lua
           lua5.1 tests/test_probe_measurements.lua
           lua5.1 tests/test_probe_module.lua
+          lua5.1 tests/test_probe_adapter.lua
       - name: Real-host integration (local checkout only)
         env:
           FOREVERPROBE_OPTIONAL: "1"

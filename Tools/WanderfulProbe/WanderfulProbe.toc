@@ -8,4 +8,5 @@
 ## SavedVariables: WanderfulProbeDB
 
 Measurements.lua
+Adapter.lua
 WanderfulProbe.lua

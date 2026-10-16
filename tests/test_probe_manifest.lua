@@ -16,5 +16,5 @@ for line in toc:gmatch("[^\r\n]+") do
         count = count + 1
     end
 end
-assert(count == 2)
+assert(count == 3)
 print("Probe manifest: development dependency and package separation passed.")

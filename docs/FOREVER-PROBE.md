@@ -5,6 +5,126 @@ WOW_PROJECT_ID 18**. This work is part of #3. The run used check revision 1; rev
 visibility of visual comparisons. The subsequent verify procedure completed successfully with
 two visual matches. Original yes/no responses about unseen logs are not accepted as evidence.
 
+## Runtime adapter procedure (#5)
+
+Use /fp steps wand adapter for the runtime validation. The panel records context, checks and
+notes; no chat checklist or pasted output is required. This procedure is separate from check
+(API experiments) and verify (visual tooltip comparisons), so it preserves those records.
+
+Enable Wanderful, ForeverProbe and WanderfulProbe, deploy with -Probe, then /reload. Equip a
+wand out of combat and start the adapter procedure. Follow its buttons and equipment prompts.
+Skip the spare-wand/combat actions when unavailable. The panel waits for equipment state and
+writes PASS/FAIL details automatically. Finish through its reload step; after the owner reports
+completion, read WanderfulProbe.lua and ForeverProbe.lua locally.
+
+The procedure:
+- compares the stored automatic baseline with a separate client read;
+- checks removal, original-wand restoration and optional replacement;
+- selects explicit bundled and historical baselines, and verifies manual selection survives
+  an equipment change;
+- restores automatic mode and records optional combat/postcombat comparisons.
+
+Wanderful.GetBaseline() observes a copied, scalar-only view without refreshing the adapter.
+The probe never calls the product slash command or Refresh while waiting for equipment changes.
+Independent item queries can warm cache data, so this procedure does not claim a forced cold
+cache or every asynchronous timing path. Same-ID late responses, restricted sentinels and
+deadlines are also covered offline. Level-up and non-base variants remain unmeasured unless
+separately exercised. A restricted client read paired with an unchanged ready runtime baseline
+is recorded as FAIL, not assumed safe from the earlier public-item probe.
+
+The wait step's pending details appear in the host panel. There is no question asking the owner
+to inspect hidden logs. All runtime evidence is numeric/scalar text: no full equipped link,
+maker name, player identity or raw API table is stored. The read-only API is versioned;
+missing/older Wanderful produces an explicit setup error. Manual/automatic actions deliberately
+change the session's selected baseline. Finish restores automatic mode; if stopping earlier,
+use /wanderful auto when ready to discard a manual selection.
+
+Offline validation loads the actual runtime and the updated private host into the same stubs.
+It exercises real command dispatch, the host wait backend, saved PASS/FAIL, skips and notes,
+and simulated reload-resume dispatch. That simulation is not a filesystem persistence test.
+Probe files remain excluded from the player package. The runtime API has no ForeverProbe
+dependency.
+
+### Completed adapter run
+
+On 2026-10-16, adapter revision 1 completed on Forever 1.60.1.70425, enUS,
+Interface 16001, WOW_PROJECT_ID 18, using the PR #18 build b70ad63.
+
+- Started at 17:25:56 and finished at 17:27:21 local time.
+- Saved status: done. Summary: 15 done; checks: 8 PASS.
+- No skipped steps, failed checks, timeouts, step errors or notes were recorded.
+- Module log context confirms the build and locale. The adapter record and matching
+  ADAPTER/STEP lines agree; no matching API ERROR/MISSING lines were recorded.
+- The reload step resumed from host run #46 to #47, and the final step is done in the
+  saved record. This proves the results were collected and written, not process-restart
+  persistence. Raw SavedVariables remain local and are not committed.
+
+| Scenario | Recorded result |
+| --- | --- |
+| Initial live baseline | Lesser Magic Wand, item 11287, DPS 11.333333015442; stored adapter and independent client read agree |
+| Wand removal | Both report empty; baseline DPS is absent, not zero |
+| Original wand restored | Item 11287 and its live DPS return through equipment-driven updates |
+| Different wand equipped | Novice's Practice Wand, item 247789, DPS 4; stored adapter and client agree |
+| Explicit bundled selection | Manual/bundled item 11287, base variant, derived DPS 11.333333333333 |
+| Equipment changed during manual selection | Actual equipment changed from 247789 to 11287; manual/bundled identity and DPS stayed unchanged |
+| Historical selection | Manual/historical item 11287, DPS 11.3 |
+| Automatic mode restored | Automatic/live item 11287, DPS 11.333333015442 |
+| Combat and postcombat | The full-link item DPS remained readable and matched the stored live baseline in both samples |
+
+The small numerical difference between live and bundled DPS is preserved: the live API
+reports its own precision, while the catalog derives the mean damage divided by speed.
+Both display 11.33 when rounded to two decimals; neither source was promoted to the other.
+
+The passive checks did not call Refresh or the product slash command while waiting for
+equipment changes. This establishes the observed removal/restoration/replacement behavior
+without a manual status read masking the runtime event path. No restricted item values were
+encountered in the combat sample, so this run does not exercise the restricted-item fallback.
+
+Both baseline observations settled ready; truly uncached runtime equipment loading was not
+established. Late/same-ID responses, deadlines, unavailable APIs and secret-value failure paths
+remain covered by offline tests, with earlier cold-load API evidence documented below.
+Level-up and non-base variants were not exercised, and acquisition availability is not asserted.
+Together with the focused tests and earlier API evidence, this completes #5's adapter
+validation scope. PR #18 records this evidence and closes #5 when merged.
+
+### Adapter procedure revision 2
+
+Revision 2 hardens two failure paths found during review. It does not change the runtime
+adapter or invalidate the completed revision-1 run above.
+
+- The manual-survival test now requires an observed starting equipment identity. A confirmed
+  empty slot is valid; a secret, malformed or failed item-ID read is not. A refused setup/retry
+  clears the earlier transition context, so the same wand becoming readable cannot count as
+  an equipment change. Retry once identity is readable, or Skip that test.
+- Reloading/relogging during steps before the final save loses session-only setup, including
+  the runtime's manual selection. At PLAYER_LOGIN, the module stops that interrupted adapter
+  record with a reason to restart /fp steps wand adapter. It does not convert the lost context
+  into a timeout/FAIL or silently recreate manual selection. The final save/reload at step 14
+  still resumes at the finish step; completed adapter/API/tooltip records are preserved.
+
+Both new regressions failed on the reviewed revision-1 code before the fix. Offline coverage
+now includes unreadable-to-readable identity recovery without equipment changes, an explicitly
+empty starting slot, and actual reconstruction of the host/runtime/probe Lua environments
+while carrying only saved tables. Intermediate restoration/replacement/manual steps stop
+cleanly; the final save step resumes. Both login callback orders are exercised. This is a
+reload/lifecycle simulation, not a filesystem or process-restart persistence claim.
+
+The revision-2 guard paths have not been exercised in-game. The successful revision-1 run
+had readable starting identities and reloaded only at the final save step, so its recorded
+observations remain applicable.
+
+### Owner-supplied chat excerpt before the guided procedure
+
+The owner supplied output from 17:06:14 through 17:07:54: automatic/live item 11287 displayed
+11.33 DPS; automatic then reported empty/DPS unknown; manual/bundled displayed 11.33 and
+manual/historical displayed 11.30; returning to automatic reported empty again. The manual
+messages explicitly identified the mode and the auto command.
+
+This is partial owner-reported evidence only. No build/locale, independent inventory view,
+replacement, manual-survival equipment change, or combat outcome was supplied. The final
+empty result is not itself evidence of a failure or of successful re-equipping. It does not
+complete #5. The adapter procedure above supplies the missing repeatable collection workflow.
+
 ## Setup and validation
 
 The host contract is the sibling ForeverProbe checkout's docs/GUIDE.md. It remains a private,

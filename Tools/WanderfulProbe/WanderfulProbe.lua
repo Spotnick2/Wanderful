@@ -2,6 +2,7 @@ local ADDON, NS = ...
 local Host = rawget(_G, "ForeverProbe")
 local Probe = Host:Module("WanderfulProbe", { api = 1, cmd = "wand" })
 local measure = NS.Measurements.New(Probe, _G)
+local adapter = NS.Adapter.New(Probe, _G, measure)
 local frame = CreateFrame("Frame")
 local tooltip
 local evidenceFrame, evidenceText
@@ -91,6 +92,9 @@ Probe:Command("stop", function()
 end, "stop equipment/combat observations and hide the sample tooltip")
 Probe:Command("clear", function() Probe:ClearLog(); Probe:Say("log cleared") end, "empty the bound saved log in place")
 
+Probe:Command("adapter", function() return adapter:Capture("manual passive observation") end, "observe the stored adapter baseline without refreshing it")
+Probe:Steps("adapter", adapter:Definition())
+
 Probe:Steps("check", {
     rev = 2,
     title = "Wanderful: wand item APIs",
@@ -162,6 +166,11 @@ Probe:Steps("verify", {
 })
 
 frame:SetScript("OnEvent", function(_, event, ...)
+    if event == "PLAYER_LOGIN" then
+        adapter:OnLogin(Host)
+        frame:UnregisterEvent("PLAYER_LOGIN")
+        return
+    end
     if event ~= "ADDON_LOADED" then measure:Event(event, ...); return end
     local name = ...
     if name ~= ADDON then return end
@@ -172,10 +181,10 @@ frame:SetScript("OnEvent", function(_, event, ...)
     if type(db.log) ~= "table" then db.log = {} end
     Probe:UseLog(db.log, 3000)
     db.loads = (type(db.loads) == "number" and db.loads or 0) + 1
-    Probe:Say("loaded; /fp steps wand check starts the guided procedure")
+    Probe:Say("loaded; /fp steps wand adapter checks the runtime; /fp steps wand check measures item APIs")
 end)
-Probe:RegisterEvents(frame, { "ADDON_LOADED" })
+Probe:RegisterEvents(frame, { "ADDON_LOADED", "PLAYER_LOGIN" })
 measure.eventsAvailable = Probe:RegisterEvents(frame, { "ITEM_DATA_LOAD_RESULT", "GET_ITEM_INFO_RECEIVED" })
 Probe:RegisterEvents(frame, { "PLAYER_EQUIPMENT_CHANGED", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" })
 
-NS._test = { Probe = Probe, measure = measure, frame = frame }
+NS._test = { Probe = Probe, measure = measure, adapter = adapter, frame = frame }

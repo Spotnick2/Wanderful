@@ -14,7 +14,7 @@ acquisition details, and upgrade flowchart.
 
 - TOC interface: **16001** (Forever 1.60.1).
 - Reference client/API dump inspected during planning: **1.60.1.70374**.
-- In-game tested build: **none yet; runtime validation is pending**.
+- In-game tested build: **1.60.1.70425**, enUS: developer probe and visual comparisons verified.
 
 The reference build is not a compatibility guarantee. Recheck the installed build when testing.
 The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved settings.
@@ -66,7 +66,8 @@ Read `../References/PROBES.md` and `../ForeverProbe/docs/GUIDE.md` before adding
 The development probe for item/quest APIs is now available. Run `pwsh tests/run.ps1`, then
 `pwsh Tools/deploy.ps1 -Probe` and `/reload`. In game, `/fp steps wand check` starts the guided
 experiment. See [probe setup and evidence status](https://github.com/Spotnick2/Wanderful/blob/main/docs/FOREVER-PROBE.md).
-Runtime findings and real-host integration validation remain pending.
+The first client run and visual follow-up are recorded there, including combat restrictions and
+validation limits. Local integration against the real ForeverProbe host also passed.
 
 Report problems through [GitHub issues](https://github.com/Spotnick2/Wanderful/issues), including
 the client build, locale, reproduction steps, and any Lua error.

@@ -2,8 +2,8 @@
 
 Status: **first client run inspected on Forever 1.60.1.70425, enUS, Interface 16001,
 WOW_PROJECT_ID 18**. This work is part of #3. The run used check revision 1; revision 2 fixes the
-visibility of visual comparisons. Recorded API outcomes remain useful, but yes/no responses
-about unseen logs are not accepted as independent verification.
+visibility of visual comparisons. The subsequent verify procedure completed successfully with
+two visual matches. Original yes/no responses about unseen logs are not accepted as evidence.
 
 ## Setup and validation
 
@@ -49,7 +49,7 @@ not publish player-identifying screenshots without preparing them appropriately.
 
 For an already-recorded full run, use /fp steps wand verify for just the two visual comparisons.
 This saves under a separate procedure key and preserves the original check record. Skip a
-comparison if either window is absent. The new display still needs an actual client check.
+comparison if either window is absent. The new display was checked in the completed visual follow-up recorded below.
 
 One-off commands are /fp wand state, item <ID>, load, quests, watch, stop, and clear. Equipment
 watching captures at most 20 relevant events per activation. It starts only on request. Item
@@ -110,6 +110,30 @@ windows while capturing.
 
 Raw saved files remain local and include account/character-specific context. Do not commit them.
 These observations establish behavior only for this run, character, locale and build. They do
-not establish all classes, variants, server availability, or future builds. The new evidence
-window and short verify procedure need an in-game check; the full mechanical run need not be
-repeated solely because the old visual prompts were unclear.
+not establish all classes, variants, server availability, or future builds. The visual follow-up below supplies the missing visual evidence; the full mechanical run did
+not need to be repeated.
+
+## Completed visual follow-up
+
+On 2026-10-15, procedure verify revision 1 completed on build 70425/enUS, after deployment
+of e5ce60e (PR #14). Its saved record is separate from the earlier check record:
+
+- Started at 21:37:44; finished at 21:38:36 local time.
+- Summary: 2 yes, 4 done. Both comparisons were answered Yes; neither was skipped.
+- The reload step recorded a transition from host run #43 to #44, and the final step is done
+  in the inspected saved record. No step errors or explanatory failure notes were present.
+- Sample screenshot at 21:38:02: the evidence window and pinned Lesser Magic Wand tooltip
+  are both visible. Both show 12-22 Arcane damage and speed 1.50. API DPS 11.333333015442
+  corresponds to the tooltip's displayed 11.3.
+- Equipped screenshot at 21:38:24: both windows identify Novice's Practice Wand, item 247789
+  in slot 18, with 4-8 Arcane damage, speed 1.50 and 4.0 DPS (API value 4).
+
+The screenshots were inspected locally and are not committed because they contain identifying
+game/chat content. The evidence display includes literal nil markers for absent tooltip columns;
+this is developer output and did not prevent these comparisons. Broader UI-scale coverage and
+other locales are not established by this run.
+
+Together with the first-run API observations and the passing local tests/host integration, this
+completes #3's probe-verification scope. It establishes enough measured behavior for the base
+DPS comparison and equipped-wand adapter work. It does not verify acquisition sources or certify
+all wand variants or classes.

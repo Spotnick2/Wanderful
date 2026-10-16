@@ -6,4 +6,5 @@
 
 Core.lua
 Catalog.lua
+Comparison.lua
 Data\Wands.lua

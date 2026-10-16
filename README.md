@@ -3,7 +3,8 @@
 A wand upgrade guide in development for casters leveling in **World of Warcraft: Forever**.
 
 `/wanderful` prints a development-status message. A nine-wand sample catalog is bundled for
-development; recommendations, comparisons, and a guide window are not implemented yet.
+development. A pure comparison/filtering model is implemented; live recommendations and a
+guide window are not available yet.
 See the [catalog schema and evidence notes](https://github.com/Spotnick2/Wanderful/blob/main/docs/CATALOG.md)
 for data coverage and limitations.
 
@@ -29,6 +30,7 @@ The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved 
    lua Tools/check.lua
    luac -p Tools/check.lua
    lua tests/test_catalog.lua
+   lua tests/test_comparison.lua
    ```
 
    `Tools/check.lua` compiles every Lua file named by the TOC without running it. Missing files,
@@ -37,7 +39,7 @@ The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved 
    that a deliberately invalid runtime file is rejected.
 
 4. For an in-game check, create an `Interface/AddOns/Wanderful` folder under `_classic_beta_`
-   and copy `Wanderful.toc`, `Core.lua`, `Catalog.lua`, and `Data/Wands.lua` into it, preserving
+   and copy `Wanderful.toc`, `Core.lua`, `Catalog.lua`, `Comparison.lua`, and `Data/Wands.lua` into it, preserving
    the `Data` directory. Enable the addon and `/reload`.
 5. Run `/wanderful` and verify that exactly one development-status message appears with no Lua
    error. Record `GetBuildInfo()` and the locale in the PR; do not report syntax checks as an
@@ -71,3 +73,5 @@ validation limits. Local integration against the real ForeverProbe host also pas
 
 Report problems through [GitHub issues](https://github.com/Spotnick2/Wanderful/issues), including
 the client build, locale, reproduction steps, and any Lua error.
+
+Comparison model details and filtering semantics are in [docs/COMPARISONS.md](https://github.com/Spotnick2/Wanderful/blob/main/docs/COMPARISONS.md).

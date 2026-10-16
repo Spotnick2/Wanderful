@@ -15,7 +15,7 @@ acquisition details, and upgrade flowchart.
 
 - TOC interface: **16001** (Forever 1.60.1).
 - Reference client/API dump inspected during planning: **1.60.1.70374**.
-- In-game tested build: **1.60.1.70425**, enUS: developer probe and visual comparisons verified.
+- In-game tested build: **1.60.1.70425**, enUS: API/visual probes and the guided runtime adapter checks passed.
 
 The reference build is not a compatibility guarantee. Recheck the installed build when testing.
 The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved settings.

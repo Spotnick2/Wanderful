@@ -80,8 +80,10 @@ Run pwsh tests/run.ps1. Adapter tests exercise replacement/removal, stale same/d
 responses, bounded requests, secret sentinels, malformed values, unavailable APIs, manual/
 historical selection, level events and real TOC/slash/event wiring.
 
-The adapter itself has not yet been exercised through a completed guided run. The prior API
-probe is evidence for the API choices, not an integration pass for this implementation.
+The guided adapter run passed on 2026-10-16, Forever 1.60.1.70425/enUS: 15 steps done,
+all 8 checks PASS, no skips or recorded step errors. Removal/restoration, replacement, manual/
+historical selection, automatic restoration and combat/postcombat were observed. The detailed
+results and remaining coverage limits are in docs/FOREVER-PROBE.md.
 
 For the in-game validation, use /fp steps wand adapter after deploying with -Probe and reloading.
 The panel guides removal/restoration, optional replacement, explicit manual/historical

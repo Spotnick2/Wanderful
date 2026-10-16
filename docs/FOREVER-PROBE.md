@@ -45,6 +45,48 @@ and simulated reload-resume dispatch. That simulation is not a filesystem persis
 Probe files remain excluded from the player package. The runtime API has no ForeverProbe
 dependency.
 
+### Completed adapter run
+
+On 2026-10-16, adapter revision 1 completed on Forever 1.60.1.70425, enUS,
+Interface 16001, WOW_PROJECT_ID 18, using the PR #18 build b70ad63.
+
+- Started at 17:25:56 and finished at 17:27:21 local time.
+- Saved status: done. Summary: 15 done; checks: 8 PASS.
+- No skipped steps, failed checks, timeouts, step errors or notes were recorded.
+- Module log context confirms the build and locale. The adapter record and matching
+  ADAPTER/STEP lines agree; no matching API ERROR/MISSING lines were recorded.
+- The reload step resumed from host run #46 to #47, and the final step is done in the
+  saved record. This proves the results were collected and written, not process-restart
+  persistence. Raw SavedVariables remain local and are not committed.
+
+| Scenario | Recorded result |
+| --- | --- |
+| Initial live baseline | Lesser Magic Wand, item 11287, DPS 11.333333015442; stored adapter and independent client read agree |
+| Wand removal | Both report empty; baseline DPS is absent, not zero |
+| Original wand restored | Item 11287 and its live DPS return through equipment-driven updates |
+| Different wand equipped | Novice's Practice Wand, item 247789, DPS 4; stored adapter and client agree |
+| Explicit bundled selection | Manual/bundled item 11287, base variant, derived DPS 11.333333333333 |
+| Equipment changed during manual selection | Actual equipment changed from 247789 to 11287; manual/bundled identity and DPS stayed unchanged |
+| Historical selection | Manual/historical item 11287, DPS 11.3 |
+| Automatic mode restored | Automatic/live item 11287, DPS 11.333333015442 |
+| Combat and postcombat | The full-link item DPS remained readable and matched the stored live baseline in both samples |
+
+The small numerical difference between live and bundled DPS is preserved: the live API
+reports its own precision, while the catalog derives the mean damage divided by speed.
+Both display 11.33 when rounded to two decimals; neither source was promoted to the other.
+
+The passive checks did not call Refresh or the product slash command while waiting for
+equipment changes. This establishes the observed removal/restoration/replacement behavior
+without a manual status read masking the runtime event path. No restricted item values were
+encountered in the combat sample, so this run does not exercise the restricted-item fallback.
+
+Both baseline observations settled ready; truly uncached runtime equipment loading was not
+established. Late/same-ID responses, deadlines, unavailable APIs and secret-value failure paths
+remain covered by offline tests, with earlier cold-load API evidence documented below.
+Level-up and non-base variants were not exercised, and acquisition availability is not asserted.
+Together with the focused tests and earlier API evidence, this completes #5's adapter
+validation scope. PR #18 records this evidence and closes #5 when merged.
+
 ### Owner-supplied chat excerpt before the guided procedure
 
 The owner supplied output from 17:06:14 through 17:07:54: automatic/live item 11287 displayed

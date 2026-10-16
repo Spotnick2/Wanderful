@@ -2,9 +2,9 @@
 
 A wand upgrade guide in development for casters leveling in **World of Warcraft: Forever**.
 
-`/wanderful` prints a development-status message. A nine-wand sample catalog is bundled for
-development. A pure comparison/filtering model is implemented; live recommendations and a
-guide window are not available yet.
+`/wanderful` prints the current comparison baseline and its provenance. A nine-wand sample catalog is bundled for
+development. Equipped-wand detection and a pure comparison/filtering model are implemented; a
+guide window is not available yet.
 See the [catalog schema and evidence notes](https://github.com/Spotnick2/Wanderful/blob/main/docs/CATALOG.md)
 for data coverage and limitations.
 
@@ -31,6 +31,7 @@ The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved 
    luac -p Tools/check.lua
    lua tests/test_catalog.lua
    lua tests/test_comparison.lua
+   lua tests/test_equipment.lua
    ```
 
    `Tools/check.lua` compiles every Lua file named by the TOC without running it. Missing files,
@@ -39,9 +40,9 @@ The addon uses a plain `Wanderful.toc`; it has no runtime dependencies or saved 
    that a deliberately invalid runtime file is rejected.
 
 4. For an in-game check, create an `Interface/AddOns/Wanderful` folder under `_classic_beta_`
-   and copy `Wanderful.toc`, `Core.lua`, `Catalog.lua`, `Comparison.lua`, and `Data/Wands.lua` into it, preserving
+   and copy `Wanderful.toc`, `Core.lua`, `Catalog.lua`, `Comparison.lua`, `Data/Wands.lua`, `Equipment.lua`, and `Runtime.lua` into it, preserving
    the `Data` directory. Enable the addon and `/reload`.
-5. Run `/wanderful` and verify that exactly one development-status message appears with no Lua
+5. Run `/wanderful` and verify that the baseline status appears with no Lua
    error. Record `GetBuildInfo()` and the locale in the PR; do not report syntax checks as an
    in-game pass.
 
@@ -75,3 +76,5 @@ Report problems through [GitHub issues](https://github.com/Spotnick2/Wanderful/i
 the client build, locale, reproduction steps, and any Lua error.
 
 Comparison model details and filtering semantics are in [docs/COMPARISONS.md](https://github.com/Spotnick2/Wanderful/blob/main/docs/COMPARISONS.md).
+
+Equipment detection, explicit manual/historical baselines and pending in-game checks are documented in [docs/EQUIPMENT.md](docs/EQUIPMENT.md).

@@ -24,6 +24,8 @@ jobs:
         run: lua5.1 tests/test_catalog.lua
       - name: Validate comparison and eligibility logic
         run: lua5.1 tests/test_comparison.lua
+      - name: Validate equipment adapter and event ordering
+        run: lua5.1 tests/test_equipment.lua
       - name: Validate probe manifest and API failure paths
         run: |
           lua5.1 Tools/check.lua Tools/WanderfulProbe/WanderfulProbe.toc

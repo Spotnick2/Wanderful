@@ -8,3 +8,5 @@ Core.lua
 Catalog.lua
 Comparison.lua
 Data\Wands.lua
+Equipment.lua
+Runtime.lua

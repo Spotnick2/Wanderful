@@ -96,6 +96,7 @@ Probe:Command("clear", function() Probe:ClearLog(); Probe:Say("log cleared") end
 Probe:Command("adapter", function() return adapter:Capture("manual passive observation") end, "observe the stored adapter baseline without refreshing it")
 Probe:Steps("adapter", adapter:Definition())
 Probe:Steps("ui", guide:Definition())
+Probe:Steps("uiequip", guide:EquipmentDefinition())
 Probe:Steps("uisave", guide:SaveDefinition())
 
 Probe:Steps("check", {

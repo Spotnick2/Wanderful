@@ -17,7 +17,7 @@ records. After `pwsh Tools/deploy.ps1 -Probe` and `/reload`, run:
   captures expected settings, requires a full client exit and relaunch, then checks the
   settings adopted at ADDON_LOADED and asks for a visible comparison.
 
-The current definitions are revision 2 for the Browse Wands UX follow-up. ui now covers native
+The current ui definition is revision 3 and uisave is revision 2 for the Browse Wands UX follow-up. ui now covers native
 item tooltips, Shift comparison/linking, responsive cards, search/sort, the Filters panel,
 explicit comparison and separate tracking. The empty step explains that replacing a wand
 does not produce an empty slot, and its pending text shows the rendered status and item ID.
@@ -72,6 +72,41 @@ The supplied tooltip also confirms a catalog gap for **Novice's Practice Wand (2
 A crafted copy is visible, but recipe, profession skill, reagents, source and equip-level
 requirements remain unverified. This is recorded under catalog issue #7 rather than silently
 adding an acquisition recommendation to the nine-item sample.
+
+### Browse Wands run and baseline follow-up (2026-10-16)
+
+The owner completed ui revision 2 using runtime **28d9452**, LibGlass r9 and ForeverProbe
+37fd2ea, on **Forever 1.60.1.70450**, enUS, Interface 16001 / WOW_PROJECT_ID 18.
+The saved host record and module log agree: 19:10:25-19:12:07 local, runs #62-63,
+4 yes, 5 done; checks 1 FAIL and 1 PASS.
+
+- The four visual answers are Yes. Local screenshots 191040, 191058, 191110 and 191126 show
+  the card grid, native item/equipped comparison, source filtering and a narrower one-column
+  layout. Filenames follow WoWScrnShot_101626_<time>.jpg. Raw images remain local.
+- Step 6 has an owner note that "Equipped baseline" does nothing or is unclear. That was a
+  real UX ambiguity: the automatic-mode button merely selected the mode already active.
+  The follow-up displays plain "Comparing with equipped wand" status in automatic mode;
+  a "Use equipped wand" action appears only for a manual/historical comparison.
+- Step 6 was completed by hand while the rendered state remained automatic/ready, item 11287.
+  Its empty-slot check correctly failed.
+- Step 7 immediately recorded PASS for matching item 11287 in that same sample. Revisions 1/2
+  did not require a prior observed empty slot, so this result does **not** establish a valid
+  removal/restoration transition. The probe now requires empty to have been observed first.
+  The same limitation applies to interpreting the older revision-1 restoration check.
+- No revision-2 uisave run is present. The saved uisave record remains revision 1 from 18:33
+  on build 70425; WanderfulDB currently contains no tracked goal. Saved-goal persistence is
+  still pending, rather than inferred from the older geometry/filter pass.
+- Native equipped comparison is visible in 191058. The grouped owner answer covers other
+  interactions, but that screenshot does not independently establish every search, sort,
+  chat-link or tracking action. No numeric UI-scale value or dark-interior note was recorded.
+
+The focused follow-up is /fp steps wand uiequip (revision 1, five steps), leaving the complete
+ui record untouched. Prepare restores automatic comparison; the next step explicitly asks for
+moving the equipped wand from the character equipment window into a bag. The restoration step
+cannot pass without a preceding observed empty slot. /fp steps wand uisave revision 2 remains
+the full-exit settings and tracked-goal check. The full ui definition is now revision 3, with
+a separate preparation action and explicit inventory instructions; no full visual rerun is
+needed just to exercise uiequip.
 
 ## Runtime adapter procedure (#5)
 

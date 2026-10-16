@@ -196,6 +196,9 @@ function Guide:Ensure()
     self.baseline = font(self.header, 15); self.baseline:SetPoint("TOPLEFT", 280, -10); self.baseline:SetHeight(46)
     self.autoButton = button(self.header, "Use equipped wand", 140, function() ns.Equipped:Automatic() end)
     self.autoButton:SetPoint("TOPRIGHT", -12, -18)
+    self.baselineHint = font(self.header, 12, { 0.65, 0.76, 0.82 })
+    self.baselineHint:SetPoint("TOPRIGHT", -12, -17); self.baselineHint:SetWidth(140); self.baselineHint:SetHeight(32)
+    self.baselineHint:SetText("Comparing with\nequipped wand")
     self.baseline:SetPoint("TOPRIGHT", self.autoButton, "TOPLEFT", -12, 8)
 
     self.browseTitle = font(content, 18, ACCENT); self.browseTitle:SetPoint("TOPLEFT", 18, -140); self.browseTitle:SetText("Browse Wands")
@@ -364,7 +367,9 @@ function Guide:Refresh()
         baseline = baseline:gsub("Item " .. state.itemID, function() return info.name end)
     end
     self.baseline:SetText(baseline)
-    self.autoButton.label:SetText(state.mode == "manual" and "Reset to equipped" or "Equipped baseline")
+    self.autoButton.label:SetText("Use equipped wand")
+    self.autoButton:SetShown(state.mode == "manual")
+    self.baselineHint:SetShown(state.mode ~= "manual")
     self.rendered = { itemID = state.itemID, mode = state.mode, status = state.status, provenance = state.provenance }
     if not self.minBox:HasFocus() then self.minBox:SetText(tostring(filters.minLevel)) end
     if not self.maxBox:HasFocus() then self.maxBox:SetText(tostring(filters.maxLevel)) end

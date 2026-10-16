@@ -7,7 +7,8 @@ end
 local w = U.New()
 local p, db = probe(w)
 p:Start()
-assert(p:Observe("restored"))
+assert(not p:Capture("empty"), "manually completing removal while equipped must fail")
+assert(not p:Capture("restored"), "an unchanged original wand is not proof of restoration")
 w.itemID = nil; w.fire("PLAYER_EQUIPMENT_CHANGED", 18)
 assert(p:Observe("empty") and p:Capture("empty"))
 w.itemID = 100; w.fire("PLAYER_EQUIPMENT_CHANGED", 18)
@@ -41,7 +42,7 @@ assert(not pcall(function() resumed:CheckSaved() end))
 local wrong = U.New()
 local lost = wrong.NS.GuideChecks.New(wrong.Probe, wrong.env, wrong.measure)
 assert(not pcall(function() lost:Observe("empty") end), "lost run setup requires a restart")
-for _, definition in ipairs({ p:Definition(), p:SaveDefinition() }) do
+for _, definition in ipairs({ p:Definition(), p:SaveDefinition(), p:EquipmentDefinition() }) do
     for _, step in ipairs(definition) do
         local count = 0
         for _, kind in ipairs({ "run", "wait", "event", "ask", "reload" }) do

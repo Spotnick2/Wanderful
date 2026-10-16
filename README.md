@@ -18,7 +18,7 @@ where supported. Shift-click inserts a cached item link into an open chat box. I
 icons and quality colors use safe client metadata; that metadata never substitutes live tooltip
 stats for the catalog's comparison data.
 
-Compare from this wand explicitly selects a bundled Forever baseline. Reset to equipped returns
+Compare from this wand explicitly selects a bundled Forever baseline. Use equipped wand returns
 to automatic detection. The optional Classic reference comparison is under Filters. Track this
 wand saves a goal separately; the Goal button returns to it without changing the filters or
 baseline, even if the card is hidden by the current filters. Search, sort, filters, tracked goal,
@@ -44,8 +44,9 @@ See [catalog evidence](docs/CATALOG.md), [comparison semantics](docs/COMPARISONS
 ## Client target and verification
 
 - TOC interface: **16001** (Forever 1.60.1).
-- Local API reference: **1.60.1.70425**.
+- Local API reference: **1.60.1.70450**.
 - In-game tested build for item APIs and the equipped adapter: **1.60.1.70425**, enUS.
+- Browse Wands visual observations: **1.60.1.70450**, enUS; equipment transition remains pending.
 - The original guide passed a full-exit settings check; the card UX and saved-goal additions
   need their updated guided in-game run.
 
@@ -69,7 +70,8 @@ untouched. Saved settings are adopted only at Wanderful's own ADDON_LOADED.
 5. Deploy using `pwsh Tools/deploy.ps1 -Probe`, then enable Wanderful, ForeverProbe and
    WanderfulProbe in game and `/reload`. Use `-AddOnsPath` for a different client destination.
    The deployer invokes LibGlass's own deploy script and the shared probe host's deploy script.
-6. Open `/wanderful`. Run `/fp steps wand ui`, followed by `/fp steps wand uisave`.
+6. The focused equipment follow-up is /fp steps wand uiequip; it preserves the full UI record.
+   Open `/wanderful`. Run `/fp steps wand ui`, followed by `/fp steps wand uisave`.
    Follow the panels; screenshots, notes and checks are saved without chat transcription.
    The settings procedure requires a **full exit and relaunch** and asks you to confirm that
    action. A simulated reload test is not an in-game persistence pass.

@@ -104,6 +104,8 @@ function H.New()
     setfenv(chunk, env)("WanderfulProbe", NS)
     local adapterChunk = assert(loadfile("Tools/WanderfulProbe/Adapter.lua"))
     setfenv(adapterChunk, env)("WanderfulProbe", NS)
+    local guideChunk = assert(loadfile("Tools/WanderfulProbe/GuideChecks.lua"))
+    setfenv(guideChunk, env)("WanderfulProbe", NS)
     w.env, w.Probe, w.NS = env, P, NS
     w.measure = NS.Measurements.New(P, env)
     return w
@@ -121,13 +123,7 @@ function H.LoadRuntime(w)
     env.C_Item.GetItemInfoInstant = function() return w.itemID, nil, nil, nil, nil, 2, 19 end
     env.C_Item.GetItemStats = function() return { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = w.dps } end
     local ns = {}
-    for line in io.lines("Wanderful.toc") do
-        line = line:match("^%s*(.-)%s*$")
-        if line ~= "" and line:sub(1, 1) ~= "#" then
-            local chunk = assert(loadfile(line:gsub("\\", "/")))
-            setfenv(chunk, env)("Wanderful", ns)
-        end
-    end
+    dofile("Tools/manifest.lua").Load(env, ns)
     return ns
 end
 return H

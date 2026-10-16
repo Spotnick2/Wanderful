@@ -1,3 +1,6 @@
 .playwright-mcp/
 .release/
 *.luac
+Libs/
+.deps/
+__pycache__/

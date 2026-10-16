@@ -9,8 +9,8 @@ $RepoRoot = Split-Path -Parent $PSScriptRoot
 $HostRoot = if ($env:FOREVERPROBE) { $env:FOREVERPROBE } else {
     Join-Path (Split-Path -Parent $RepoRoot) "ForeverProbe"
 }
-$RuntimeFiles = @("Wanderful.toc", "Core.lua", "Catalog.lua", "Comparison.lua", "Data\Wands.lua", "Equipment.lua", "Runtime.lua")
-$ProbeFiles = @("WanderfulProbe.toc", "Measurements.lua", "Adapter.lua", "WanderfulProbe.lua")
+$RuntimeFiles = @("Wanderful.toc", "Core.lua", "Catalog.lua", "Comparison.lua", "Data\Wands.lua", "GuideModel.lua", "UI.lua", "Equipment.lua", "Runtime.lua")
+$ProbeFiles = @("WanderfulProbe.toc", "Measurements.lua", "Adapter.lua", "GuideChecks.lua", "WanderfulProbe.lua")
 $ProbeRoot = Join-Path $PSScriptRoot "WanderfulProbe"
 if (-not (Test-Path -LiteralPath $AddOnsPath -PathType Container)) {
     throw "AddOns path not found: $AddOnsPath"
@@ -53,6 +53,13 @@ function Copy-AddonFiles($SourceRoot, $Name, $Files) {
     }
     Write-Host "Copied $Name ($($Files.Count) files) to $destination"
 }
-if (-not $ProbeOnly) { Copy-AddonFiles $RepoRoot "Wanderful" $RuntimeFiles }
+if (-not $ProbeOnly) {
+    $LibRoot = if ($env:LIBGLASS) { $env:LIBGLASS } else { Join-Path (Split-Path -Parent $RepoRoot) "LibGlass" }
+    $LibDeploy = Join-Path $LibRoot "Tools\deploy.ps1"
+    if (-not (Test-Path -LiteralPath $LibDeploy -PathType Leaf)) { throw "LibGlass checkout missing at $LibRoot (or set LIBGLASS)." }
+    & pwsh -NoProfile -File $LibDeploy -Addon Wanderful -AddOnsPath $AddOnsPath -Lua $LuaPath
+    if ($LASTEXITCODE -ne 0) { throw "LibGlass deploy failed; Wanderful runtime was not copied." }
+    Copy-AddonFiles $RepoRoot "Wanderful" $RuntimeFiles
+}
 if ($Probe -or $ProbeOnly) { Copy-AddonFiles $ProbeRoot "WanderfulProbe" $ProbeFiles }
 Write-Host "Use /reload to load the copied files."

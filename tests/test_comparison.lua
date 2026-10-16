@@ -206,13 +206,7 @@ end)
 test("runtime TOC loads the comparison model without client APIs", function()
     local runtimeNS = {}
     local env = setmetatable({ SlashCmdList = {}, print = function() end }, { __index = _G })
-    for line in io.lines("Wanderful.toc") do
-        line = line:match("^%s*(.-)%s*$")
-        if line ~= "" and line:sub(1, 1) ~= "#" then
-            local chunk = assert(loadfile(line:gsub("\\", "/")))
-            setfenv(chunk, env)("Wanderful", runtimeNS)
-        end
-    end
+    dofile("Tools/manifest.lua").Load(env, runtimeNS)
     assert(runtimeNS.Comparison.Compare(snapshot(25), snapshot(20)).percent == 25)
     assert(#runtimeNS.Comparison.List(runtimeNS.WandData, snapshot(10), character) > 0)
 end)

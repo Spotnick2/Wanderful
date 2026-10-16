@@ -3,6 +3,7 @@ local Host = rawget(_G, "ForeverProbe")
 local Probe = Host:Module("WanderfulProbe", { api = 1, cmd = "wand" })
 local measure = NS.Measurements.New(Probe, _G)
 local adapter = NS.Adapter.New(Probe, _G, measure)
+local guide = NS.GuideChecks.New(Probe, _G, measure)
 local frame = CreateFrame("Frame")
 local tooltip
 local evidenceFrame, evidenceText
@@ -94,6 +95,8 @@ Probe:Command("clear", function() Probe:ClearLog(); Probe:Say("log cleared") end
 
 Probe:Command("adapter", function() return adapter:Capture("manual passive observation") end, "observe the stored adapter baseline without refreshing it")
 Probe:Steps("adapter", adapter:Definition())
+Probe:Steps("ui", guide:Definition())
+Probe:Steps("uisave", guide:SaveDefinition())
 
 Probe:Steps("check", {
     rev = 2,
@@ -180,6 +183,7 @@ frame:SetScript("OnEvent", function(_, event, ...)
     if type(db) ~= "table" then db = {}; WanderfulProbeDB = db end
     if type(db.log) ~= "table" then db.log = {} end
     Probe:UseLog(db.log, 3000)
+    guide:Bind(db)
     db.loads = (type(db.loads) == "number" and db.loads or 0) + 1
     Probe:Say("loaded; /fp steps wand adapter checks the runtime; /fp steps wand check measures item APIs")
 end)
@@ -187,4 +191,4 @@ Probe:RegisterEvents(frame, { "ADDON_LOADED", "PLAYER_LOGIN" })
 measure.eventsAvailable = Probe:RegisterEvents(frame, { "ITEM_DATA_LOAD_RESULT", "GET_ITEM_INFO_RECEIVED" })
 Probe:RegisterEvents(frame, { "PLAYER_EQUIPMENT_CHANGED", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" })
 
-NS._test = { Probe = Probe, measure = measure, adapter = adapter, frame = frame }
+NS._test = { Probe = Probe, measure = measure, adapter = adapter, guide = guide, frame = frame }

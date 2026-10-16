@@ -5,6 +5,31 @@ WOW_PROJECT_ID 18**. This work is part of #3. The run used check revision 1; rev
 visibility of visual comparisons. The subsequent verify procedure completed successfully with
 two visual matches. Original yes/no responses about unseen logs are not accepted as evidence.
 
+## Guide window procedures (#6)
+
+The guide window has two separate procedures; these do not replace the completed adapter/API
+records. After `pwsh Tools/deploy.ps1 -Probe` and `/reload`, run:
+
+- `/fp steps wand ui`: opens the actual guide, captures visual judgments and screenshots for
+  list/details, filters and layout, then checks removal/restoration against the rendered
+  automatic baseline without refreshing it. Begin requires an equipped readable wand.
+- `/fp steps wand uisave`: opens the guide, asks you to move/resize it and change a filter,
+  captures expected settings, requires a full client exit and relaunch, then checks the
+  settings adopted at ADDON_LOADED and asks for a visible comparison.
+
+The host cannot tell a reload from a full exit. The uisave record therefore includes an explicit
+owner confirmation; the numeric comparison alone does not establish process-restart persistence.
+Keep the captured size, position and filters unchanged until the post-restart comparison.
+The expected sample lives in WanderfulProbeDB, separately from WanderfulDB. Defaults without a
+deliberate change and same-session captures cannot pass the restart revision check.
+Window visibility and manual baseline selection are intentionally session-only.
+
+Use Note and Shot to record visual problems, including the UI scale and background. Visual
+answers save screenshots; numerical checks write their own details. Complete the final reload
+to save results. No console reading or chat paste is required. Offline tests model fresh runtime
+environments and validate the new definitions against the real private host. They do not claim
+an in-game visual or filesystem persistence pass.
+
 ## Runtime adapter procedure (#5)
 
 Use /fp steps wand adapter for the runtime validation. The panel records context, checks and

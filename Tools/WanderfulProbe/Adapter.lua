@@ -1,10 +1,12 @@
 local _, NS = ...
 local Adapter = {}
 NS.Adapter = Adapter
+local SAVE_STEP = 14 -- Definition()[SAVE_STEP] is the intended reload/save step.
 
 function Adapter.New(Probe, env, measure)
     local self = {}
     local originalID, manual, beforeManualID
+    local beforeManualKnown = false
     local lastWait
     local function api(path)
         local value = env
@@ -92,10 +94,11 @@ function Adapter.New(Probe, env, measure)
         return record(label or "passive snapshot", view(), equipped())
     end
     function self:Start()
+        originalID, manual, beforeManualID, beforeManualKnown, lastWait = nil, nil, nil, false, nil
         assert(measure:CombatState() == "peace", "Start out of combat with a wand equipped.")
         local input = equipped()
         assert(finite(input.itemID), "Equip a wand before starting.")
-        originalID, manual, beforeManualID, lastWait = input.itemID, nil, nil, nil
+        originalID = input.itemID
         measure:Context("adapter procedure")
         assert(Probe:Try("Wanderful.UseAutomaticBaseline", runtime().UseAutomaticBaseline))
         return self:Capture("begin automatic")
@@ -115,7 +118,7 @@ function Adapter.New(Probe, env, measure)
         elseif kind == "replacement" then
             passed = originalID ~= nil and input.itemID ~= originalID and live(state, input)
         elseif kind == "manual-change" then
-            passed = manual ~= nil and input.itemID ~= beforeManualID
+            passed = manual ~= nil and beforeManualKnown and input.itemID ~= beforeManualID
                 and (input.status == "empty" or finite(input.itemID)) and input.status ~= "restricted"
                 and input.status ~= "unavailable" and self:ManualMatches(state)
         elseif kind == "combat" then passed = measure:CombatState() == "combat"
@@ -144,13 +147,20 @@ function Adapter.New(Probe, env, measure)
             and state.provenance == manual.provenance and state.dps == manual.dps
     end
     function self:SelectManual(historical)
+        -- Invalidate an earlier attempt even if this retry cannot observe equipment.
+        manual, beforeManualID, beforeManualKnown = nil, nil, false
+        local input = equipped()
+        local known = input.status == "empty" or finite(input.itemID)
+        if not historical then
+            assert(known, "Equipped identity is unreadable; retry when readable or Skip the manual-change check.")
+        end
         local ok, selected = Probe:Try("Wanderful.SelectManualBaseline", runtime().SelectManualBaseline, 11287, "base", historical)
         assert(ok and selected == true, "Catalog baseline unavailable.")
-        local state, input = view(), equipped()
+        local state = view()
         assert(state.mode == "manual" and state.itemID == 11287 and state.variant == "base"
             and state.provenance == (historical and "historical" or "bundled") and finite(state.dps),
             "Manual selection was not reflected in runtime state.")
-        manual, beforeManualID = state, input.itemID
+        manual, beforeManualID, beforeManualKnown = state, input.itemID, known
         return record(historical and "historical selection" or "manual selection", state, input)
     end
     function self:CheckManualChange()
@@ -171,9 +181,23 @@ function Adapter.New(Probe, env, measure)
         end
         return passed, record("combat comparison", state, input)
     end
+    -- The host resumes active steps, but adapter setup is intentionally session-only.
+    -- An intermediate reload must not turn lost setup into a runtime timeout/FAIL.
+    function self:OnLogin(host)
+        if originalID ~= nil or type(host) ~= "table" then return false end
+        local steps = type(host.db) == "table" and host.db.steps
+        local key = "WanderfulProbe/adapter"
+        local rec = type(steps) == "table" and steps.active == key
+            and type(steps.records) == "table" and steps.records[key]
+        if type(rec) ~= "table" or rec.status ~= "active" or not finite(rec.at)
+            or rec.at < 1 or rec.at >= SAVE_STEP then return false end
+        local reason = "Adapter setup was lost on reload; restart /fp steps wand adapter."
+        Probe:Say(reason)
+        return Probe:Try("stop interrupted adapter procedure", host.Steps and host.Steps.Stop, reason)
+    end
     function self:Definition()
         return {
-            rev = 1, title = "Wanderful: equipped-wand adapter",
+            rev = 2, title = "Wanderful: equipped-wand adapter",
             { text = "Equip a wand and stay out of combat, then Begin. The panel records build, baseline and checks automatically. It observes stored state without refreshing it. Skip optional actions you cannot perform.",
               button = "Begin adapter check", run = function() return self:Start() end },
             { text = "Wait for the initial baseline to settle. Unknown or failed reads are recorded; no item is treated as zero DPS.",

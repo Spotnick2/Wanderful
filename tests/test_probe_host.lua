@@ -13,6 +13,13 @@ end
 local H = dofile("tests/probe_harness.lua")
 local w = H.New()
 local env = w.env
+local function savedLogHas(environment, part)
+    local db = environment.WanderfulProbeDB
+    for _, line in ipairs(db and db.log or {}) do
+        if line:find(part, 1, true) then return true end
+    end
+    return false
+end
 local function load(path, addon, ns)
     local chunk = assert(loadfile(path))
     setfenv(chunk, env)(addon, ns)
@@ -93,10 +100,9 @@ FP.Steps.Skip() -- optional combat encounter
 FP.Steps.Skip() -- optional combat sample
 FP.Steps.Poll() -- already out of combat; check live baseline
 assert(adapterRecord.at == 14 and adapterRecord.results[13].check == "PASS")
--- Simulate a changed host run to test resume dispatch, not filesystem persistence.
-FP.run = FP.run + 1
-FP.Steps.Resume()
-assert(adapterRecord.at == 15 and adapterRecord.results[14].detail:find("run #", 1, true))
+-- Final reload/resume is exercised below with fresh Lua environments.
+FP.Steps.Skip()
+assert(adapterRecord.at == 15)
 FP.Steps.Next()
 assert(adapterRecord.status == "done" and adapterRecord.results[5].status == "skipped")
 assert(FP.db.steps.records["WanderfulProbe/check"] == record and record.status == "stopped")
@@ -111,5 +117,84 @@ w.now = w.now + 121
 FP.Steps.Poll()
 assert(failedRecord.results[3].status == "timeout" and failedRecord.results[3].check == "FAIL")
 FP.Steps.Stop("failure path checked")
-assert(#w.chat == 0 and not w.has("PRIVATE-CRAFT-NAME"))
+assert(#w.chat == 0 and not savedLogHas(env, "PRIVATE-CRAFT-NAME"))
+-- Recreate the host, runtime and probe environments while retaining only saved tables.
+-- This models a reload's loss of locals; it is not a filesystem persistence claim.
+local function savedCopy(value)
+    if type(value) ~= "table" then return value end
+    local copy = {}
+    for key, child in pairs(value) do copy[key] = savedCopy(child) end
+    return copy
+end
+local function reloadEnvironment(hostDB, probeDB, reverseEvents)
+    local fresh = H.New()
+    local newEnv = fresh.env
+    local function loadFresh(path, addon, namespace)
+        local chunk = assert(loadfile(path))
+        setfenv(chunk, newEnv)(addon, namespace)
+    end
+    for line in io.lines(root .. "/ForeverProbe.toc") do
+        line = line:match("^%s*(.-)%s*$")
+        if line:match("%.lua$") and line:sub(1, 1) ~= "#" then
+            loadFresh(root .. "/" .. line:gsub("\\", "/"), "ForeverProbe", {})
+        end
+    end
+    newEnv.ForeverProbeDB = savedCopy(hostDB)
+    fresh.fire("ADDON_LOADED", "ForeverProbe")
+    local host = assert(newEnv.ForeverProbe)
+    host.Console = nil
+    H.LoadRuntime(fresh)
+    local namespace = {}
+    for _, name in ipairs({ "Measurements.lua", "Adapter.lua", "WanderfulProbe.lua" }) do
+        loadFresh("Tools/WanderfulProbe/" .. name, "WanderfulProbe", namespace)
+    end
+    newEnv.WanderfulProbeDB = savedCopy(probeDB)
+    fresh.fire("ADDON_LOADED", "WanderfulProbe")
+    if reverseEvents then
+        for i = 1, math.floor(#fresh.frames / 2) do
+            local j = #fresh.frames - i + 1
+            fresh.frames[i], fresh.frames[j] = fresh.frames[j], fresh.frames[i]
+        end
+    end
+    fresh.fire("PLAYER_LOGIN")
+    return fresh, host
+end
+for _, reverseEvents in ipairs({ false, true }) do
+    for _, interruptedStep in ipairs({ 4, 5, 7 }) do
+        w.itemID, w.dps = 100, 20
+        env.SlashCmdList.FOREVERPROBE("steps wand adapter")
+        FP.Steps.Run()
+        FP.Steps.Poll()
+        w.itemID = nil
+        w.fire("PLAYER_EQUIPMENT_CHANGED", 18, false)
+        FP.Steps.Poll() -- restoration
+        if interruptedStep >= 5 then
+            w.itemID = 100
+            w.fire("PLAYER_EQUIPMENT_CHANGED", 18, true)
+            FP.Steps.Poll()
+        end
+        if interruptedStep == 7 then FP.Steps.Skip(); FP.Steps.Run() end
+        assert(FP.db.steps.records["WanderfulProbe/adapter"].at == interruptedStep)
+        local fresh, host = reloadEnvironment(FP.db, env.WanderfulProbeDB, reverseEvents)
+        local interrupted = host.db.steps.records["WanderfulProbe/adapter"]
+        assert(interrupted.status == "stopped" and host.db.steps.active == nil,
+            "lost intermediate context must stop with a restart message")
+        assert(savedLogHas(fresh.env, "restart /fp steps wand adapter"))
+        host.Steps.Poll()
+        local current = interrupted.results[interruptedStep]
+        assert(not current or (current.status ~= "timeout" and current.check ~= "FAIL"))
+        assert(host.db.steps.records["WanderfulProbe/check"].status == "stopped")
+        assert(#fresh.chat == 0)
+        FP.Steps.Stop("reload fixture captured")
+    end
+    -- The intended final save/reload still resumes and completes with fresh environments.
+    env.SlashCmdList.FOREVERPROBE("steps wand adapter")
+    while FP.db.steps.records["WanderfulProbe/adapter"].at < 14 do FP.Steps.Skip() end
+    local fresh, host = reloadEnvironment(FP.db, env.WanderfulProbeDB, reverseEvents)
+    local finalRecord = host.db.steps.records["WanderfulProbe/adapter"]
+    assert(finalRecord.status == "active" and finalRecord.at == 15)
+    host.Steps.Next()
+    assert(finalRecord.status == "done" and #fresh.chat == 0)
+    FP.Steps.Stop("final reload fixture captured")
+end
 print("Probe host integration: saved-variable timing, dispatch, log clearing, adapter waits, failures and guided records passed.")

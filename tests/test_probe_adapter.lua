@@ -8,7 +8,7 @@ setfenv(chunk, env)("WanderfulProbe", w.NS)
 w.fire("ADDON_LOADED", "WanderfulProbe")
 w.fire("PLAYER_LOGIN")
 local steps = assert(P.procedures.adapter)
-assert(steps.rev == 1 and #steps == 15 and steps[14].reload == true)
+assert(steps.rev == 2 and #steps == 15 and steps[14].reload == true)
 assert(P.procedures.check and P.procedures.verify, "existing records must have separate procedure keys")
 for _, step in ipairs(steps) do
     local kinds = 0
@@ -80,6 +80,29 @@ env.GetInventoryItemID = function() return w.secret() end
 assert(pcall(P.commands.adapter))
 assert(w.has("client mode=nil status=restricted"))
 env.GetInventoryItemID = oldRead
+
+-- An unreadable starting identity must not become a fabricated equipment change.
+for _, unreadable in ipairs({
+    function() return w.secret() end,
+    function() error("inventory unavailable") end,
+    function() return "malformed identity" end,
+}) do
+    steps[6].run() -- arm a prior attempt too: a refused retry must invalidate it
+    env.GetInventoryItemID = unreadable
+    local selected = pcall(steps[6].run)
+    env.GetInventoryItemID = oldRead
+    assert(not selected, "manual transition was armed without a known starting identity")
+    assert(not steps[7].wait() and not steps[7].check(),
+        "an unchanged readable wand must not pass after an unreadable starting sample")
+end
+-- Explicitly observed empty is different from missing identity.
+w.itemID = nil
+steps[6].run()
+assert(not steps[7].wait())
+w.itemID = 100
+w.fire("PLAYER_EQUIPMENT_CHANGED", 18, true)
+assert(steps[7].wait() and steps[7].check())
+steps[9].run()
 
 -- Missing runtime is a clear procedure error, never a fabricated pass.
 env.Wanderful = nil

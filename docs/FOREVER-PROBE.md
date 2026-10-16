@@ -87,6 +87,32 @@ Level-up and non-base variants were not exercised, and acquisition availability 
 Together with the focused tests and earlier API evidence, this completes #5's adapter
 validation scope. PR #18 records this evidence and closes #5 when merged.
 
+### Adapter procedure revision 2
+
+Revision 2 hardens two failure paths found during review. It does not change the runtime
+adapter or invalidate the completed revision-1 run above.
+
+- The manual-survival test now requires an observed starting equipment identity. A confirmed
+  empty slot is valid; a secret, malformed or failed item-ID read is not. A refused setup/retry
+  clears the earlier transition context, so the same wand becoming readable cannot count as
+  an equipment change. Retry once identity is readable, or Skip that test.
+- Reloading/relogging during steps before the final save loses session-only setup, including
+  the runtime's manual selection. At PLAYER_LOGIN, the module stops that interrupted adapter
+  record with a reason to restart /fp steps wand adapter. It does not convert the lost context
+  into a timeout/FAIL or silently recreate manual selection. The final save/reload at step 14
+  still resumes at the finish step; completed adapter/API/tooltip records are preserved.
+
+Both new regressions failed on the reviewed revision-1 code before the fix. Offline coverage
+now includes unreadable-to-readable identity recovery without equipment changes, an explicitly
+empty starting slot, and actual reconstruction of the host/runtime/probe Lua environments
+while carrying only saved tables. Intermediate restoration/replacement/manual steps stop
+cleanly; the final save step resumes. Both login callback orders are exercised. This is a
+reload/lifecycle simulation, not a filesystem or process-restart persistence claim.
+
+The revision-2 guard paths have not been exercised in-game. The successful revision-1 run
+had readable starting identities and reloaded only at the final save step, so its recorded
+observations remain applicable.
+
 ### Owner-supplied chat excerpt before the guided procedure
 
 The owner supplied output from 17:06:14 through 17:07:54: automatic/live item 11287 displayed

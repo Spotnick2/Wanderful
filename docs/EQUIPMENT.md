@@ -90,7 +90,9 @@ The panel guides removal/restoration, optional replacement, explicit manual/hist
 selection and optional combat. It records build/locale, observations, checks, skips and notes.
 Follow the panel through its reload step; results are read from local SavedVariables, not
 pasted from chat. See docs/FOREVER-PROBE.md for the collection and interpretation details.
-Do not replace this procedure with a manual chat checklist.
+Do not replace this procedure with a manual chat checklist. Revision 2 stops an interrupted
+mid-run reload with a restart message because the session setup is lost; the final save/reload
+still resumes normally. An unreadable starting identity cannot arm the manual-change test.
 
 Runtime.lua exposes the version-1 Wanderful API:
 - GetBaseline() returns a fresh scalar view of the stored mode, status, provenance, item ID,

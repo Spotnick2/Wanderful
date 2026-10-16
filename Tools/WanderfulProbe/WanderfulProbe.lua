@@ -166,6 +166,11 @@ Probe:Steps("verify", {
 })
 
 frame:SetScript("OnEvent", function(_, event, ...)
+    if event == "PLAYER_LOGIN" then
+        adapter:OnLogin(Host)
+        frame:UnregisterEvent("PLAYER_LOGIN")
+        return
+    end
     if event ~= "ADDON_LOADED" then measure:Event(event, ...); return end
     local name = ...
     if name ~= ADDON then return end
@@ -178,7 +183,7 @@ frame:SetScript("OnEvent", function(_, event, ...)
     db.loads = (type(db.loads) == "number" and db.loads or 0) + 1
     Probe:Say("loaded; /fp steps wand adapter checks the runtime; /fp steps wand check measures item APIs")
 end)
-Probe:RegisterEvents(frame, { "ADDON_LOADED" })
+Probe:RegisterEvents(frame, { "ADDON_LOADED", "PLAYER_LOGIN" })
 measure.eventsAvailable = Probe:RegisterEvents(frame, { "ITEM_DATA_LOAD_RESULT", "GET_ITEM_INFO_RECEIVED" })
 Probe:RegisterEvents(frame, { "PLAYER_EQUIPMENT_CHANGED", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED" })
 

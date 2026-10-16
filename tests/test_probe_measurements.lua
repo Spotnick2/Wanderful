@@ -144,4 +144,25 @@ test("combat measurement never treats missing or restricted state as active", fu
     assert(w.measure:CombatState() == "unavailable")
 end)
 
+
+test("comparison evidence is readable without logs and guards secrets", function()
+    local w = H.New()
+    w.env.GetInventoryItemID = function() return 11287 end
+    w.env.C_Item.GetItemInfo = function() return "Lesser Magic Wand" end
+    w.env.C_Item.GetItemStats = function() return { ITEM_MOD_DAMAGE_PER_SECOND_SHORT = 11.3333 } end
+    w.env.C_TooltipInfo = { GetItemByID = function()
+        return { lines = { { leftText = "12 - 22 Arcane Damage", rightText = "Speed 1.50" } } }
+    end }
+    local text, id = w.measure:ReviewEquipment()
+    assert(id == 11287 and text:find("Lesser Magic Wand", 1, true))
+    assert(text:find("11.3333", 1, true) and text:find("Speed 1.50", 1, true))
+    w.env.C_Item.GetItemStats = function() return w.secret() end
+    w.env.C_TooltipInfo.GetItemByID = function() return { lines = { { leftText = w.secret(), rightText = w.secret() } } } end
+    assert(w.measure:ReviewItem(11287):find("<secret>", 1, true))
+    w.env.UnitRangedDamage = function() return w.secret(), w.secret() end
+    assert(w.measure:ReviewRestrictions():find("<secret>", 1, true))
+    w.env.GetInventoryItemID = function() return w.secret() end
+    assert(w.measure:ReviewEquipment() == "Ranged slot 18: <secret>")
+end)
+
 print("Probe measurements: " .. count .. " tests passed.")

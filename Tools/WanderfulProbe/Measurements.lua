@@ -77,6 +77,57 @@ function Measurements.New(Probe, env)
         self:Tooltip("C_TooltipInfo.GetItemByID", false, itemID)
     end
 
+    -- Readable, secret-safe evidence. Display public tooltip text without parsing it.
+    function self:ReviewItem(itemID)
+        assert(plainID(itemID), "Review requires a plain positive item ID")
+        local lines = { "Item ID: " .. itemID }
+        local ok, name = Probe:Try("review item name", api("C_Item.GetItemInfo"), itemID)
+        lines[#lines + 1] = "Name: " .. (ok and Probe.Show(name, true) or "unavailable")
+        local statsOK, stats = Probe:Try("review item stats", api("C_Item.GetItemStats"), "item:" .. itemID)
+        local dps = "unavailable"
+        if statsOK then
+            if secret(stats) then dps = "<secret>"
+            elseif type(stats) == "table" then dps = Probe.Show(stats.ITEM_MOD_DAMAGE_PER_SECOND_SHORT, true) end
+        end
+        lines[#lines + 1] = "Item DPS (API): " .. dps
+        lines[#lines + 1] = "Public tooltip (API):"
+        local tooltipOK, data = Probe:Try("review public tooltip", api("C_TooltipInfo.GetItemByID"), itemID)
+        if not tooltipOK then lines[#lines + 1] = "unavailable"
+        elseif secret(data) then lines[#lines + 1] = "<secret>"
+        elseif type(data) == "table" then
+            local rows = data.lines
+            if secret(rows) then lines[#lines + 1] = "<secret>"
+            elseif type(rows) == "table" then
+                for i = 1, 10 do
+                    local row = rows[i]
+                    if secret(row) then lines[#lines + 1] = "<secret>"
+                    elseif row == nil then break
+                    elseif type(row) == "table" then
+                        lines[#lines + 1] = Probe.Show(row.leftText, true) .. "  /  " .. Probe.Show(row.rightText, true)
+                    end
+                end
+            else lines[#lines + 1] = "no lines returned" end
+        else lines[#lines + 1] = "no tooltip returned" end
+        return table.concat(lines, "\n")
+    end
+
+    function self:ReviewEquipment()
+        local ok, id = Probe:Try("review ranged item", api("GetInventoryItemID"), "player", 18)
+        if not ok then return "Ranged slot 18: unavailable" end
+        if secret(id) then return "Ranged slot 18: <secret>" end
+        if id == nil then return "Ranged slot 18: empty" end
+        if not plainID(id) then return "Ranged slot 18: unexpected value" end
+        return "Ranged slot 18\n" .. self:ReviewItem(id), id
+    end
+
+    function self:ReviewRestrictions()
+        local result = Probe.Pack(Probe:Try("review UnitRangedDamage", api("UnitRangedDamage"), "player"))
+        if not result[1] then return "UnitRangedDamage: unavailable" end
+        local values = {}
+        for i = 2, result.n do values[#values + 1] = Probe.Show(result[i], true) end
+        return "UnitRangedDamage (character values):\n" .. table.concat(values, ", ")
+    end
+
     function self:Equipment(label)
         self:Context(label)
         call("GetInventorySlotInfo", "RangedSlot")

@@ -1,9 +1,9 @@
 # WanderfulProbe: item and quest API measurements
 
-Status: **procedure implemented; no in-game findings recorded yet**. This work is part of #3.
-The planning reference is Forever 1.60.1.70374 / Interface 16001. It is not a measured build for
-this probe. Every observation logs GetBuildInfo, locale and combat context; the host also keeps
-its session baseline. Do not promote catalog data or API assumptions until actual evidence is read.
+Status: **first client run inspected on Forever 1.60.1.70425, enUS, Interface 16001,
+WOW_PROJECT_ID 18**. This work is part of #3. The run used check revision 1; revision 2 fixes the
+visibility of visual comparisons. Recorded API outcomes remain useful, but yes/no responses
+about unseen logs are not accepted as independent verification.
 
 ## Setup and validation
 
@@ -41,9 +41,15 @@ loading remains unmeasured. The invalid-ID candidate is 2147483647, not an asser
 IDs the server supports.
 
 Use Skip for unavailable actions, such as lacking a spare wand or a combat encounter. Use the
-panel's Note box for differences and missing fields. Yes to the combat restriction question
-means a restriction was observed, not a failed procedure. Screenshots are local evidence; do
+panel's Note box for differences and missing fields. The comparison actions show a movable
+Wand evidence window with the item name, API DPS, and readable public tooltip text beside a
+pinned game tooltip. Combat restriction results are recorded automatically; no yes/no question
+asks the owner to inspect logs. Screenshots are local evidence; do
 not publish player-identifying screenshots without preparing them appropriately.
+
+For an already-recorded full run, use /fp steps wand verify for just the two visual comparisons.
+This saves under a separate procedure key and preserves the original check record. Skip a
+comparison if either window is absent. The new display still needs an actual client check.
 
 One-off commands are /fp wand state, item <ID>, load, quests, watch, stop, and clear. Equipment
 watching captures at most 20 relevant events per activation. It starts only on request. Item
@@ -85,15 +91,25 @@ Do not delete the owner's unrelated screenshots.
 - The probe does not define account-wide facts: these observations depend on equipment, cache,
   character, locale, or combat.
 
-## Findings to fill after the first run
+## Findings from the first run
 
 | Question | Observed build / locale | Evidence | Result |
 | --- | --- | --- | --- |
-| Wand slot and equipment events | Pending | Pending | Pending |
-| Metadata, stats and public tooltip fields | Pending | Pending | Pending |
-| Cold/warm load success and invalid-ID outcome | Pending | Pending | Pending |
-| Combat secrecy and missing values | Pending | Pending | Pending |
-| Character quest completion | Pending | Pending | Pending |
+| Wand slot and equipment events | 70425 / enUS | Run #40, equipped/removal/replacement snapshots | Wand 247789 was in slot 18; slot 16 held a mace. Removing/restoring the wand generated slot-18 events and empty/item transitions. The event's second boolean must not substitute for rereading equipment. |
+| Metadata, stats and public tooltip fields | 70425 / enUS | Run #40, public item calls and sample screenshot | GetItemInfo, GetItemInfoInstant, GetItemStats and GetItemByID returned data. Lesser Magic Wand reported API DPS 11.333333015442; public tooltip text and the screenshot showed 12-22 Arcane, speed 1.50 and displayed DPS 11.3. |
+| Cold/warm load success and invalid-ID outcome | 70425 / enUS | Run #40, REQUEST/LOAD lines | IDs 11288, 5243, 5242 and 5198 started cold and received success=true. The other five sample IDs started warm and succeeded. Candidate 2147483647 returned success=false. |
+| Combat secrecy and missing values | 70425 / enUS | Run #40, explicit combat snapshot | UnitRangedDamage returned six secret values in combat and readable values outside it. Item ID, item metadata, item DPS and the inspected public tooltip text remained readable for the equipped item. |
+| Character quest completion | 70425 / enUS | Run #40, combat and post-combat snapshots | Quests 99, 96393 and 96391 returned false in both snapshots. This does not establish eligibility or account completion. |
 
-Record actual values, missing APIs and unresolved cases here after reading the saved files.
-Offline stubs and a successful CI run establish test behavior, not Forever runtime behavior.
+The saved run was still active at the reload step in the inspected disk snapshot. It includes the
+owner's note that the expected values were not visible. The user's yes/no answers at visual
+steps are not treated as reliable independent comparisons. The sample screenshot does show a
+tooltip matching the recorded public item values; the equipped comparison screenshot has no
+tooltip. No console visibility can be inferred from screenshots because the host hides its own
+windows while capturing.
+
+Raw saved files remain local and include account/character-specific context. Do not commit them.
+These observations establish behavior only for this run, character, locale and build. They do
+not establish all classes, variants, server availability, or future builds. The new evidence
+window and short verify procedure need an in-game check; the full mechanical run need not be
+repeated solely because the old visual prompts were unclear.

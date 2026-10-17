@@ -41,6 +41,7 @@ FP.Console = nil
 local ns = {}
 load("Tools/WanderfulProbe/Measurements.lua", "WanderfulProbe", ns)
 load("Tools/WanderfulProbe/Adapter.lua", "WanderfulProbe", ns)
+load("Tools/WanderfulProbe/GuideChecks.lua", "WanderfulProbe", ns)
 load("Tools/WanderfulProbe/WanderfulProbe.lua", "WanderfulProbe", ns)
 assert(rawget(env, "WanderfulProbeDB") == nil, "saved variables must not be made at file scope")
 env.WanderfulProbeDB = { log = {}, loads = 4 }
@@ -145,7 +146,7 @@ local function reloadEnvironment(hostDB, probeDB, reverseEvents)
     host.Console = nil
     H.LoadRuntime(fresh)
     local namespace = {}
-    for _, name in ipairs({ "Measurements.lua", "Adapter.lua", "WanderfulProbe.lua" }) do
+    for _, name in ipairs({ "Measurements.lua", "Adapter.lua", "GuideChecks.lua", "WanderfulProbe.lua" }) do
         loadFresh("Tools/WanderfulProbe/" .. name, "WanderfulProbe", namespace)
     end
     newEnv.WanderfulProbeDB = savedCopy(probeDB)

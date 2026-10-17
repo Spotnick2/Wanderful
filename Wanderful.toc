@@ -1,12 +1,17 @@
 ## Interface: 16001
 ## Title: Wanderful
 ## Author: Spotnick
-## Notes: Wand upgrade guide for WoW: Forever (development skeleton).
+## Notes: Browse wand upgrades and their acquisition paths in WoW: Forever.
+## SavedVariables: WanderfulDB
 ## Version: @project-version@
 
+Libs\LibGlass-1.0\LibGlass-1.0.xml
 Core.lua
 Catalog.lua
 Comparison.lua
 Data\Wands.lua
+GuideModel.lua
+ItemPresentation.lua
+UI.lua
 Equipment.lua
 Runtime.lua

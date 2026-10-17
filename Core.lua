@@ -3,6 +3,8 @@ ns.name = addonName
 
 function ns.ShowStatus(message)
     local command, itemID, variant = (message or ""):match("^%s*(%S*)%s*(%S*)%s*(%S*)%s*$")
+    if command == "" then ns.Guide:Toggle(); return end
+    if command == "show" then ns.Guide:Open(); return end
     if command == "auto" then ns.Equipped:Automatic()
     elseif command == "baseline" or command == "historical" then
         if not ns.Equipped:Manual(tonumber(itemID), variant ~= "" and variant or "base", command == "historical") then
@@ -10,7 +12,7 @@ function ns.ShowStatus(message)
             return
         end
     elseif command ~= "" and command ~= "status" then
-        print("Wanderful: /wanderful [status | auto | baseline <itemID> [variant] | historical <itemID> [variant]]")
+        print("Wanderful: /wanderful [show | status | auto | baseline <itemID> [variant] | historical <itemID> [variant]]")
         return
     end
     if ns.Equipped.state.mode == "automatic" then ns.Equipped:Refresh() end

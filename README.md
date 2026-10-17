@@ -46,9 +46,9 @@ See [catalog evidence](docs/CATALOG.md), [comparison semantics](docs/COMPARISONS
 - TOC interface: **16001** (Forever 1.60.1).
 - Local API reference: **1.60.1.70450**.
 - In-game tested build for item APIs and the equipped adapter: **1.60.1.70425**, enUS.
-- Browse Wands visual observations: **1.60.1.70450**, enUS; equipment transition remains pending.
-- The original guide passed a full-exit settings check; the card UX and saved-goal additions
-  need their updated guided in-game run.
+- Browse Wands visual observations and rendered empty/restored equipment transitions: **1.60.1.70450**, enUS.
+- Full client exit/relaunch preserved the tracked goal, filters and window geometry on **70450**, enUS.
+  Detailed evidence and the recovered missing-wand observation are in docs/FOREVER-PROBE.md.
 
 The addon embeds **LibGlass r9**, MIT licensed, approved by the owner on 2026-10-16.
 Its license and media ship in `Libs/LibGlass-1.0`; no separate player installation is needed.

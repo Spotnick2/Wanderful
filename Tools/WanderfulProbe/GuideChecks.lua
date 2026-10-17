@@ -145,12 +145,12 @@ function NS.GuideChecks.New(Probe, env, measure)
     end
     function self:SaveDefinition()
         return {
-            rev = 3, title = "Wanderful: guide settings after full exit",
+            rev = 4, title = "Wanderful: guide settings after full exit",
             { text = "Open the guide. This clears any previous expected-settings sample.",
               button = "Begin settings check", run = function() return self:BeginSave() end },
             { text = "In Wanderful, select a wand card. In the right-hand How to get it panel click Track this wand. A Goal button appears along the bottom. Selecting a card or Compare from this wand does not track it. If it already says Stop tracking this wand, the goal is set. This step advances automatically.",
               wait = function() return self:HasGoal() end, timeout = 300 },
-            { text = "Move/resize Wanderful or change a filter for this test. Press Enter after editing a level. When you have finished all changes, press Next here. The following step captures the settings and tracked goal; keep them unchanged until after the restart." },
+            { text = "Move/resize Wanderful or choose a different source filter for this test. When you have finished all changes, press Next here. The following step captures the settings and tracked goal; keep them unchanged until after the restart." },
             { text = "Capture the prepared settings and goal. This step advances automatically when both are ready; any missing setup is explained below.",
               wait = function() return self:CanRemember() end, timeout = 300,
               check = function() return self:Remember() end, screenshot = "wand-guide-before-exit" },

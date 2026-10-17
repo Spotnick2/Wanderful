@@ -17,13 +17,13 @@ records. After `pwsh Tools/deploy.ps1 -Probe` and `/reload`, run:
   captures expected settings, requires a full client exit and relaunch, then checks the
   settings adopted at ADDON_LOADED and asks for a visible comparison.
 
-The current ui definition is revision 3 and uisave is revision 3 for the Browse Wands UX follow-up. ui now covers native
+The current ui definition is revision 3 and uisave is revision 4 for the Browse Wands UX follow-up. ui now covers native
 item tooltips, Shift comparison/linking, responsive cards, search/sort, the Filters panel,
 explicit comparison and separate tracking. The empty step explains that replacing a wand
 does not produce an empty slot, and its pending text shows the rendered status and item ID.
-uisave revision 3 waits for a tracked wand as well as a deliberate settings change; the captured
+uisave revision 4 waits for a tracked wand as well as a deliberate settings change; the captured
 signature includes search, sort and the goal. Completed visual/equipment results are recorded below;
-the tracked-goal full-exit check remains pending.
+the tracked-goal full-exit check has passed as recorded below.
 
 The host cannot tell a reload from a full exit. The uisave record therefore includes an explicit
 owner confirmation; the numeric comparison alone does not establish process-restart persistence.
@@ -136,6 +136,43 @@ Restart only /fp steps wand uisave after deploying and reloading this fix. Its d
 changed, so the host will stop the old active revision rather than resume at the wrong step.
 The completed uiequip result remains valid and needs no repeat. Current tracked-goal persistence
 remains pending until the revised full-exit procedure is completed.
+
+### Completed tracked-goal persistence run (2026-10-17)
+
+uisave revision 3 completed on Forever **1.60.1.70450**, enUS, using runtime 04e1fdf,
+LibGlass r9 and ForeverProbe 37fd2ea. Saved host results and module STEP lines agree:
+02:23:05-02:26:08 local, host runs #140-142; **2 yes, 8 done; checks: 2 PASS**.
+
+- The procedure observed tracking, then captured deliberate changes at revision 6.
+- The captured sample held Skycaller (12984/base), Dungeon source filtering and a
+  1274 x 679 window. The load-time revision was 6 after restart and the complete settings
+  signature matched, including the tracked goal.
+- The owner confirmed a full exit/relaunch and visibly matching settings/goal.
+- Before/after screenshots WoWScrnShot_101726_022503.jpg and 022558.jpg show matching layout,
+  Dungeon filtering and Goal: Skycaller. The additional 022459.jpg capture was also inspected.
+- The final reload resumed at the finish step and completion is saved. No step errors,
+  failed checks or skips occur in this revision-3 run.
+- This result was in the newest account SavedVariables set, different from the earlier
+  equipment run's set. When inspecting future evidence, compare modification times,
+  procedure identities and timestamps rather than assuming one account directory.
+
+The owner noted that "after editing a level" was unclear. It referred to optional From/To
+fields inside Filters, not character leveling, and is unnecessary for this procedure.
+uisave revision 4 removes that phrase; moving/resizing or changing any filter is sufficient.
+Only instruction text changed, so the successful revision-3 persistence evidence remains
+applicable and no repeat is required.
+
+During this run the rendered baseline was automatic/empty before and after restart. The
+screenshots show No wand equipped and Gain unknown. The owner reported the equipped wand
+was absent during the probe and then clarified that detection works again. Manual mode
+was not active in the saved observations. The settings procedure did not independently
+inspect inventory slots, so these records do not establish whether the slot was empty or
+temporarily unreadable/stale, and do not identify a root cause. No speculative detection
+change is made from this report. The separate uiequip run above already verified actual
+empty/restored rendering transitions on build 70450.
+
+The requested visual, focused equipment and full-exit goal/settings checks for #6 are now
+recorded. Your Path and acquisition-data expansion remain separate milestones (#8 and #7).
 
 ## Runtime adapter procedure (#5)
 

@@ -2,7 +2,7 @@ local _, NS = ...
 NS.GuideChecks = {}
 function NS.GuideChecks.New(Probe, env, measure)
     local self = {}
-    local db, originalID, emptyObserved
+    local db, originalID, emptyObserved, saveStartRevision
     local function runtime()
         local api = rawget(env, "Wanderful")
         assert(type(api) == "table" and type(api.GetGuideState) == "function"
@@ -62,23 +62,41 @@ function NS.GuideChecks.New(Probe, env, measure)
     function self:BeginSave()
         assert(db, "Probe saved variables have not loaded.")
         db.guideExpected = nil
+        saveStartRevision = state().revision
         measure:Context("guide settings persistence")
         return self:Open()
     end
-    function self:Remember()
-        assert(db, "Probe saved variables have not loaded.")
-        db.guideExpected = nil
+    function self:HasGoal()
         local s = state()
-        assert(s.shown and type(s.revision) == "number" and s.revision > 0
-            and s.revision > s.loadedRevision, "Move/resize the guide and change a filter in this session, then retry.")
-        assert(type(s.trackedItemID) == "number", "Track a wand before capturing the settings and goal.")
-        assert(type(s.signature) == "string", "Guide settings signature is missing.")
+        return s.shown == true and type(s.trackedItemID) == "number",
+            "In Wanderful, select a wand card, then click Track this wand in the right-hand How to get it panel. A Goal button appears along the bottom."
+    end
+    function self:CanRemember()
+        if not db or type(saveStartRevision) ~= "number" then
+            return false, "Begin the settings procedure first."
+        end
+        local s = state()
+        if not s.shown then return false, "Open /wanderful to continue." end
+        if type(s.trackedItemID) ~= "number" then
+            return false, "Select a wand card and click Track this wand in the right-hand panel. Selecting or comparing a wand does not track it."
+        end
+        if type(s.revision) ~= "number" or s.revision <= saveStartRevision then
+            return false, "Change a filter or move/resize Wanderful, then finish the edit (Enter for a level box)."
+        end
+        if type(s.signature) ~= "string" then return false, "Guide settings are not available yet." end
+        return true, "Settings and tracked goal are ready to capture."
+    end
+    function self:Remember()
+        if db then db.guideExpected = nil end
+        local ready, detail = self:CanRemember()
+        if not ready then Probe:Say(detail); return false, detail end
+        local s = state()
         db.guideExpected = { signature = s.signature, revision = s.revision }
-        return record("expected guide settings saved for restart comparison", s)
+        return true, record("expected guide settings and tracked goal saved for restart comparison", s)
     end
     function self:CheckSaved()
         local expected = db and db.guideExpected
-        assert(type(expected) == "table", "No expected settings. Restart /fp steps wand uisave.")
+        if type(expected) ~= "table" then return false, "No expected settings were captured. Restart /fp steps wand uisave." end
         -- Compare the revision adopted at ADDON_LOADED, not a revision mutated by opening.
         local s = state()
         local passed = expected.revision > 0 and s.loadedRevision == expected.revision
@@ -127,11 +145,15 @@ function NS.GuideChecks.New(Probe, env, measure)
     end
     function self:SaveDefinition()
         return {
-            rev = 2, title = "Wanderful: guide settings after full exit",
+            rev = 3, title = "Wanderful: guide settings after full exit",
             { text = "Open the guide. This clears any previous expected-settings sample.",
               button = "Begin settings check", run = function() return self:BeginSave() end },
-            { text = "Move and resize Wanderful, change at least one filter and Track a wand. Press Enter after editing a level. Keep these choices until after the restart. Capture stores the current settings and goal for comparison.",
-              button = "Capture settings", run = function() return self:Remember() end, screenshot = "wand-guide-before-exit" },
+            { text = "In Wanderful, select a wand card. In the right-hand How to get it panel click Track this wand. A Goal button appears along the bottom. Selecting a card or Compare from this wand does not track it. If it already says Stop tracking this wand, the goal is set. This step advances automatically.",
+              wait = function() return self:HasGoal() end, timeout = 300 },
+            { text = "Move/resize Wanderful or change a filter for this test. Press Enter after editing a level. When you have finished all changes, press Next here. The following step captures the settings and tracked goal; keep them unchanged until after the restart." },
+            { text = "Capture the prepared settings and goal. This step advances automatically when both are ready; any missing setup is explained below.",
+              wait = function() return self:CanRemember() end, timeout = 300,
+              check = function() return self:Remember() end, screenshot = "wand-guide-before-exit" },
             { text = "Exit World of Warcraft completely, then relaunch and log into the same account. Do not use /reload for this step.", reload = "exit" },
             { text = "Did you exit the client completely and relaunch, rather than use /reload? The host cannot distinguish them; choose No or Not sure if you did not.",
               ask = true },

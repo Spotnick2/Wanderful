@@ -7,7 +7,7 @@ two visual matches. Original yes/no responses about unseen logs are not accepted
 
 ## Guide window procedures (#6)
 
-The guide window has two separate procedures; these do not replace the completed adapter/API
+The guide window has separate visual, equipment and settings procedures; these do not replace the completed adapter/API
 records. After `pwsh Tools/deploy.ps1 -Probe` and `/reload`, run:
 
 - `/fp steps wand ui`: opens the actual guide, captures visual judgments and screenshots for
@@ -17,13 +17,13 @@ records. After `pwsh Tools/deploy.ps1 -Probe` and `/reload`, run:
   captures expected settings, requires a full client exit and relaunch, then checks the
   settings adopted at ADDON_LOADED and asks for a visible comparison.
 
-The current ui definition is revision 3 and uisave is revision 2 for the Browse Wands UX follow-up. ui now covers native
+The current ui definition is revision 3 and uisave is revision 3 for the Browse Wands UX follow-up. ui now covers native
 item tooltips, Shift comparison/linking, responsive cards, search/sort, the Filters panel,
 explicit comparison and separate tracking. The empty step explains that replacing a wand
 does not produce an empty slot, and its pending text shows the rendered status and item ID.
-uisave revision 2 requires a tracked wand as well as a deliberate settings change; the captured
-signature includes search, sort and the goal. Re-run those procedures on the new deployment
-before claiming the added UI/tracking paths passed in game.
+uisave revision 3 waits for a tracked wand as well as a deliberate settings change; the captured
+signature includes search, sort and the goal. Completed visual/equipment results are recorded below;
+the tracked-goal full-exit check remains pending.
 
 The host cannot tell a reload from a full exit. The uisave record therefore includes an explicit
 owner confirmation; the numeric comparison alone does not establish process-restart persistence.
@@ -107,6 +107,35 @@ cannot pass without a preceding observed empty slot. /fp steps wand uisave revis
 the full-exit settings and tracked-goal check. The full ui definition is now revision 3, with
 a separate preparation action and explicit inventory instructions; no full visual rerun is
 needed just to exercise uiequip.
+
+### Equipment follow-up and settings-capture fix (2026-10-17)
+
+The focused uiequip revision-1 record is complete on Forever **1.60.1.70450**, enUS,
+using runtime 71daf2a, LibGlass r9 and ForeverProbe 37fd2ea. Saved host results and
+module STEP lines agree: 01:30:02-01:30:40 local, runs #68-69; **5 done, checks: 2 PASS**.
+
+- Preparation recorded automatic/ready item 7607.
+- Removal advanced automatically with rendered automatic/empty and no item ID: PASS.
+- Restoration advanced automatically with rendered automatic/ready item 7607: PASS.
+- The reload resumed from run #68 to #69 and the finish is saved. This establishes the
+  previously unresolved rendered empty/restored transition without replacing the visual record.
+
+The owner reported an assertion from uisave revision 2, step 2, in run #70 started 01:30:54.
+The capture required a tracked goal and used assert for this ordinary setup condition.
+This does not establish a tracking-code failure or a persistence failure; capture had not
+succeeded and no current expected-settings sample was available.
+
+uisave revision 3 replaces the combined capture action with separate tracking guidance,
+a deliberate-edit/Next step and a readiness wait that captures automatically. Missing tracking
+now returns a pending explanation instead of raising a Lua error. The text identifies the
+right-hand Track this wand button and the footer Goal indicator, and distinguishes selecting
+or comparing a card from tracking it. Readiness requires a change since Begin, so an existing
+goal/settings combination cannot be captured prematurely.
+
+Restart only /fp steps wand uisave after deploying and reloading this fix. Its definition has
+changed, so the host will stop the old active revision rather than resume at the wrong step.
+The completed uiequip result remains valid and needs no repeat. Current tracked-goal persistence
+remains pending until the revised full-exit procedure is completed.
 
 ## Runtime adapter procedure (#5)
 

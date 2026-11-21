@@ -83,6 +83,7 @@ function M.Baseline(data, state)
 end
 function M.Gain(comparison)
     if comparison.delta == nil then return "Gain unknown" end
+    if comparison.relation == "equal" then return "Same DPS as baseline" end
     local text = string.format("%+.2f DPS", comparison.delta)
     if comparison.percent ~= nil then text = text .. string.format(" (%+.1f%%)", comparison.percent) end
     return text
@@ -178,6 +179,7 @@ function M.EquipLabel(row, level)
         return prefix, "In " .. n .. (n == 1 and " level" or " levels")
     end
     if row.eligibility.equip.status == "blocked" then return prefix, "Equip restrictions" end
+    if not M.Finite(level) then return prefix, "Your level is unknown" end
     return prefix, "Level requirement met"
 end
 function M.SourceSummary(row)

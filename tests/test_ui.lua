@@ -180,4 +180,79 @@ test("gain sorting leaves unknown gains in stable catalog order", function()
     w.guide:SetFilter("sort", "gain")
     assert(w.guide.rows[1].item.itemID == first and w.guide.rows[1].comparison.delta == nil)
 end)
+test("menu choices draw above the advanced filter panel and its controls", function()
+    local w = U.New(); w.guide:Open()
+    w.click(w.guide.filtersButton)
+    w.click(w.guide.filterButtons.class)
+    local function under(frame, root)
+        while frame do if frame == root then return true end; frame = frame.parent end
+        return false
+    end
+    local panelTop, popupLow = 0, math.huge
+    for _, frame in ipairs(w.frames) do
+        if frame.level then
+            if under(frame, w.guide.filtersPanel) then panelTop = math.max(panelTop, frame:GetFrameLevel()) end
+            if under(frame, w.guide.popup) then popupLow = math.min(popupLow, frame:GetFrameLevel()) end
+        end
+    end
+    assert(w.guide.popup:IsShown() and popupLow > panelTop, popupLow .. " <= " .. panelTop)
+    w.click(w.guide.popup.buttons[1])
+    assert(w.guide.settings.filters.class == "player" and not w.guide.popup:IsShown())
+end)
+
+test("live single-precision DPS equal to a catalog wand is not an upgrade", function()
+    local w = U.New(); w.guide:Open()
+    w.itemID, w.dps = 11287, 11.333333015442; w.fire("PLAYER_EQUIPMENT_CHANGED", 18)
+    w.guide:SetFilter("minLevel", 1)
+    local same
+    for i, row in ipairs(w.guide.rows) do if row.item.itemID == 11287 then same = w.guide.pool[i] end end
+    assert(same and same.row.comparison.relation == "equal" and same.row.comparison.delta > 0, "raw delta is kept")
+    assert(same.gain:GetText() == "Same DPS as baseline")
+    w.guide:SetFilter("upgradesOnly", true)
+    for _, row in ipairs(w.guide.rows) do assert(row.item.itemID ~= 11287) end
+end)
+
+test("an unreadable character level is shown as unknown on cards and details", function()
+    local w = U.New(); w.guide:Open()
+    w.level = nil; w.fire("PLAYER_EQUIPMENT_CHANGED", 18)
+    assert(w.ns.Equipped.state.level == nil and #w.guide.rows > 0)
+    for i, row in ipairs(w.guide.rows) do
+        local card = w.guide.pool[i].access:GetText()
+        assert(not card:find("Level requirement met", 1, true), card)
+        if row.item.forever.stats.equipLevel and row.eligibility.equip.status ~= "blocked" then
+            assert(card:find("Your level is unknown", 1, true) and w.guide.pool[i].equip:GetText():find("Equip at level", 1, true))
+        end
+    end
+    assert(w.guide.detailText:GetText():find("Your level is unknown", 1, true))
+end)
+
+test("item loads repaint only displayed items, once per frame", function()
+    local w = U.New(); w.guide:Open()
+    local refreshes, refresh = 0, w.guide.Refresh
+    w.guide.Refresh = function(...) refreshes = refreshes + 1; return refresh(...) end
+    w.fire("GET_ITEM_INFO_RECEIVED", 999999, true); w.fire("ITEM_DATA_LOAD_RESULT", w.secret(), true)
+    w.tick(); assert(refreshes == 0, "unrelated or unreadable items do not repaint")
+    local shown = w.guide.rows[1].item.itemID
+    w.fire("GET_ITEM_INFO_RECEIVED", shown, true); w.fire("ITEM_DATA_LOAD_RESULT", shown, true)
+    assert(refreshes == 0); w.tick(); assert(refreshes == 1, "a batch coalesces into one repaint")
+    w.itemID, w.dps = 11287, nil; w.fire("PLAYER_EQUIPMENT_CHANGED", 18)
+    assert(w.ns.Equipped.state.status == "loading"); refreshes = 0
+    w.dps = 11.333333015442; w.fire("ITEM_DATA_LOAD_RESULT", 11287, true)
+    assert(refreshes == 1 and w.ns.Equipped.state.status == "ready")
+    w.tick(); assert(refreshes == 1, "the equipment repaint cancels the cosmetic one")
+    w.guide.window:Hide(); w.fire("GET_ITEM_INFO_RECEIVED", shown, true); w.tick()
+    assert(refreshes == 1)
+end)
+
+test("closing the guide leaves another window's tooltip alone", function()
+    local w = U.New(); w.guide:Open()
+    local other = w.env.CreateFrame("Frame", nil, w.env.UIParent)
+    w.env.GameTooltip:SetOwner(other, "ANCHOR_RIGHT"); w.env.GameTooltip:Show()
+    w.guide.window:Hide()
+    assert(w.env.GameTooltip:IsShown() and w.env.GameTooltip:GetOwner() == other)
+    w.guide:Open()
+    local card = w.guide.pool[1]; card.scripts.OnEnter(card)
+    w.guide.window:Hide()
+    assert(not w.env.GameTooltip:IsShown() and w.ns.ItemPresentation.owner == nil)
+end)
 print("Guide UI: " .. count .. " tests passed.")

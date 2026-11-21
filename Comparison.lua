@@ -40,8 +40,11 @@ function Comparison.Compare(candidate, baseline)
     if result.candidate.value == nil then result.reason = "candidate_" .. result.candidate.reason; return result end
     if result.baseline.value == nil then result.reason = "baseline_" .. result.baseline.reason; return result end
     result.delta = result.candidate.value - result.baseline.value
-    if result.delta > 0 then result.relation = "upgrade"
-    elseif result.delta < 0 then result.relation = "downgrade"
+    -- Live DPS is single precision (11.333333015442 for the catalog's 11.333333333333).
+    -- Treat differences within that rounding as equal; delta keeps the raw value.
+    local tolerance = math.max(math.abs(result.candidate.value), math.abs(result.baseline.value)) * 2 ^ -20
+    if result.delta > tolerance then result.relation = "upgrade"
+    elseif result.delta < -tolerance then result.relation = "downgrade"
     else result.relation = "equal" end
     if result.baseline.value == 0 then result.reason = "zero_baseline"; return result end
     result.percent = result.delta / result.baseline.value * 100

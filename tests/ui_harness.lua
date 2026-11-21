@@ -142,6 +142,7 @@ function U.New(saved)
     local ns = H.LoadRuntime(w)
     env.GameTooltip = env.CreateFrame("GameTooltip", "GameTooltip", env.UIParent)
     function env.GameTooltip:SetOwner(owner, anchor) self.owner, self.anchor = owner, anchor end
+    function env.GameTooltip:GetOwner() return self.owner end
     function env.GameTooltip:SetHyperlink(link) self.link = link end
     env.WanderfulDB = saved
     w.fire("ADDON_LOADED", "Wanderful")

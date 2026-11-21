@@ -56,6 +56,11 @@ even a false event does not terminate the pending request: it triggers a reread,
 data remains pending until the deadline. Timeout yields unknown/load_exhausted, not a claim
 that an item does not exist. Request/timer exceptions and missing facilities end loading safely.
 
+While the guide is shown, a load event for an item it painted (a card, the selection, the
+baseline or the logo) schedules one cosmetic repaint for the next frame; other or unreadable
+item IDs are ignored. Any refresh before then cancels it, so an equipped-item completion,
+which repaints through the equipment callback, paints once.
+
 ## Commands
 
 - /wanderful or /wanderful status: refresh and print baseline mode, state, provenance and DPS.

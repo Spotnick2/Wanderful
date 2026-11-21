@@ -35,8 +35,9 @@ if type(CreateFrame) == "function" then
             if event == "ADDON_LOADED" then
                 if (...) == ns.name then WanderfulDB = ns.Guide:Initialize(rawget(_G, "WanderfulDB")) end
             else
+                -- Schedule first: an equipped-item completion repaints now and cancels it.
+                if event == "ITEM_DATA_LOAD_RESULT" or event == "GET_ITEM_INFO_RECEIVED" then ns.Guide:ItemLoaded((...)) end
                 ns.Equipped:Event(event, ...)
-                if event == "ITEM_DATA_LOAD_RESULT" or event == "GET_ITEM_INFO_RECEIVED" then ns.Guide:Refresh() end
             end
         end)
     else ns.Equipped.loadsAvailable = false end

@@ -35,13 +35,21 @@ local function hideComparison()
         if tooltip and type(tooltip.Hide) == "function" then tooltip:Hide() end
     end
 end
+-- The tooltips are shared: hide them only while Wanderful still owns GameTooltip.
 function P.HideTooltip()
+    local owner = P.owner
     P.owner, P.itemID = nil, nil
-    hideComparison()
     local tooltip = rawget(_G, "GameTooltip")
-    if tooltip then tooltip:Hide() end
+    if not owner or not tooltip then return end
+    local ok, current = call(tooltip.GetOwner, tooltip)
+    if not ok or not plain(current) or current ~= owner then return end
+    hideComparison()
+    tooltip:Hide()
     local hide = rawget(_G, "GameTooltip_HideShoppingTooltips")
     if type(hide) == "function" then hide(tooltip) end
+end
+function P.PlainID(value)
+    return plain(value) and ns.GuideModel.Finite(value) and value > 0 and value % 1 == 0
 end
 function P.Tooltip(owner, itemID)
     local tooltip = rawget(_G, "GameTooltip")

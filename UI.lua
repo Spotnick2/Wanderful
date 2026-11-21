@@ -116,6 +116,9 @@ function Guide:Choose(key, owner)
     if not self.popup then
         self.popup = CreateFrame("Frame", nil, self.content)
         self.popup:SetFrameStrata("DIALOG"); self.popup:SetWidth(184)
+        -- Above the filters panel and its controls (surface tops sit 10 levels up). Set before
+        -- the surface: LibGlass levels the top from its host when it is created.
+        self.popup:SetFrameLevel(self.filtersPanel:GetFrameLevel() + 20)
         self.popup.surface = surface(self.popup, false)
         self.popup.buttons = {}
     end
@@ -159,6 +162,7 @@ local function icon(parent, size)
     return b
 end
 local function paintIcon(b, itemID)
+    if itemID and Guide.painted then Guide.painted[itemID] = true end
     local info = ns.ItemPresentation.Metadata(itemID)
     b.itemID = itemID; b.image:SetTexture(info.icon); b.outline:SetColorTexture(unpack(info.color))
     return info
@@ -180,7 +184,7 @@ function Guide:Ensure()
     self.shell = surface(w, true)
     local content = CreateFrame("Frame", nil, w); content:SetAllPoints(w)
     content:SetFrameLevel(self.glass.ContentLevel(w)); self.content = content
-    local logo = icon(content, 32); logo:SetPoint("TOPLEFT", 18, -13); paintIcon(logo, 11287)
+    self.logo = icon(content, 32); self.logo:SetPoint("TOPLEFT", 18, -13); paintIcon(self.logo, 11287)
     local title = font(self.shell.top, 25, ACCENT); title:SetPoint("TOPLEFT", 62, -15); title:SetText("Wanderful")
     local subtitle = font(self.shell.top, 12, { 0.67, 0.78, 0.83 })
     subtitle:SetPoint("TOPLEFT", 226, -25); subtitle:SetText("Your next wand, and the path ahead.")
@@ -350,8 +354,22 @@ function Guide:Row(index)
     self.pool[index] = b
     return b
 end
+-- Item-cache events arrive in batches (bags, other item UIs). Only items this guide painted
+-- schedule a repaint, at most one per frame; any refresh before it runs cancels it.
+function Guide:ItemLoaded(itemID)
+    if self.repaintPending or not self.window or not self.window:IsShown() then return end
+    if not ns.ItemPresentation.PlainID(itemID) or not (self.painted and self.painted[itemID]) then return end
+    local timer = rawget(_G, "C_Timer")
+    self.repaintPending = true
+    local ok = type(timer) == "table" and type(timer.After) == "function"
+        and pcall(timer.After, 0, function() if self.repaintPending then self:Refresh() end end)
+    if not ok then self:Refresh() end
+end
 function Guide:Refresh()
+    self.repaintPending = false
     if not self.window or not self.window:IsShown() or not self.ready then return end
+    self.painted = {}
+    paintIcon(self.logo, 11287)
     local state = ns.Equipped.state
     local context = M.Character(_G, state.level)
     local filters = M.Filters(self.settings, context)

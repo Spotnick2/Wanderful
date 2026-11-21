@@ -9,4 +9,5 @@
 
 Measurements.lua
 Adapter.lua
+GuideChecks.lua
 WanderfulProbe.lua

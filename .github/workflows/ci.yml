@@ -14,6 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch LibGlass at the release pinned by .pkgmeta
+        run: |
+          bash tests/fetch_libglass.sh "$RUNNER_TEMP/LibGlass"
+          echo "LIBGLASS=$RUNNER_TEMP/LibGlass" >> "$GITHUB_ENV"
       - name: Install Lua 5.1 validation tool
         run: sudo apt-get update && sudo apt-get install -y lua5.1
       - name: Compile all tracked Lua
@@ -24,6 +30,11 @@ jobs:
         run: lua5.1 tests/test_catalog.lua
       - name: Validate comparison and eligibility logic
         run: lua5.1 tests/test_comparison.lua
+      - name: Validate guide UI with real LibGlass
+        run: |
+          lua5.1 tests/test_ui.lua
+          lua5.1 tests/test_ui_methods.lua
+          lua5.1 tests/test_probe_guide.lua
       - name: Validate equipment adapter and event ordering
         run: lua5.1 tests/test_equipment.lua
       - name: Validate probe manifest and API failure paths
@@ -58,3 +69,11 @@ jobs:
             echo 'ERROR: invalid Lua passed validation'
             exit 1
           fi
+
+      # -d prevents uploads and GitHub releases. This validates packaging only.
+      - name: Package (dry run)
+        uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0
+        with:
+          args: -d
+      - name: Verify exact runtime package and pinned library content
+        run: python3 tests/check_package.py

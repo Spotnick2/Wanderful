@@ -17,7 +17,10 @@ the value unknown with a reason. It does not fall back to a plausible reported D
 overflow likewise produces an unknown result.
 
 Compare(candidateSnapshot, baselineSnapshot) returns both DPS results, relation, delta and
-percent. Relation is upgrade, equal, downgrade, or unknown. Missing data produces no invented
+percent. Relation is upgrade, equal, downgrade, or unknown. A difference within 2^-20 of the
+larger DPS is equal: live DPS is single precision (the Lesser Magic Wand reads 11.333333015442
+against the catalog's 11.333333333333), and delta and percent keep the raw values as evidence.
+Missing data produces no invented
 delta or percentage. An explicit zero-DPS baseline can have a delta, but no percentage.
 These are base wand DPS changes; no character DPS, talent, resistance, proc or spell-power
 model is implied. Attributes, effects, school and speed remain available on the original item.
@@ -72,7 +75,7 @@ rather than being asserted compatible. A sourceKind filter needs a matching sour
 
 Level bounds apply to known equip requirements. Unknown levels remain visible with unknown
 status; they are never treated as level 1 or inferred from quest levels. School filtering requires
-a known matching school. upgradesOnly requires a positive known delta, so a missing baseline
+a known matching school. upgradesOnly requires the upgrade relation, so a missing baseline
 cannot yield an upgrade list. usableOnly requires overall usable_now.
 
 Rows sort by known equip level ascending (unknown last), unrounded candidate DPS descending

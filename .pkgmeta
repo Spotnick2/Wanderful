@@ -1,6 +1,11 @@
 package-as: Wanderful
 enable-nolib-creation: no
 
+externals:
+  Libs/LibGlass-1.0:
+    url: https://github.com/Spotnick2/LibGlass
+    tag: r9
+
 ignore:
   - .github
   - .gitignore
@@ -12,3 +17,10 @@ ignore:
   - AGENTS.md
   - CLAUDE.md
   - README.md
+
+  - Libs/LibGlass-1.0/tests
+  - Libs/LibGlass-1.0/docs
+  - Libs/LibGlass-1.0/Tools
+  - Libs/LibGlass-1.0/AGENTS.md
+  - Libs/LibGlass-1.0/CLAUDE.md
+  - Libs/LibGlass-1.0/README.md

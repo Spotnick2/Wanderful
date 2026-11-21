@@ -5,6 +5,175 @@ WOW_PROJECT_ID 18**. This work is part of #3. The run used check revision 1; rev
 visibility of visual comparisons. The subsequent verify procedure completed successfully with
 two visual matches. Original yes/no responses about unseen logs are not accepted as evidence.
 
+## Guide window procedures (#6)
+
+The guide window has separate visual, equipment and settings procedures; these do not replace the completed adapter/API
+records. After `pwsh Tools/deploy.ps1 -Probe` and `/reload`, run:
+
+- `/fp steps wand ui`: opens the actual guide, captures visual judgments and screenshots for
+  list/details, filters and layout, then checks removal/restoration against the rendered
+  automatic baseline without refreshing it. Begin requires an equipped readable wand.
+- `/fp steps wand uisave`: opens the guide, asks you to move/resize it and change a filter,
+  captures expected settings, requires a full client exit and relaunch, then checks the
+  settings adopted at ADDON_LOADED and asks for a visible comparison.
+
+The current ui definition is revision 3 and uisave is revision 4 for the Browse Wands UX follow-up. ui now covers native
+item tooltips, Shift comparison/linking, responsive cards, search/sort, the Filters panel,
+explicit comparison and separate tracking. The empty step explains that replacing a wand
+does not produce an empty slot, and its pending text shows the rendered status and item ID.
+uisave revision 4 waits for a tracked wand as well as a deliberate settings change; the captured
+signature includes search, sort and the goal. Completed visual/equipment results are recorded below;
+the tracked-goal full-exit check has passed as recorded below.
+
+The host cannot tell a reload from a full exit. The uisave record therefore includes an explicit
+owner confirmation; the numeric comparison alone does not establish process-restart persistence.
+Keep the captured size, position and filters unchanged until the post-restart comparison.
+The expected sample lives in WanderfulProbeDB, separately from WanderfulDB. Defaults without a
+deliberate change and same-session captures cannot pass the restart revision check.
+Window visibility and manual baseline selection are intentionally session-only.
+
+Use Note and Shot to record visual problems, including the UI scale and background. Visual
+answers save screenshots; numerical checks write their own details. Complete the final reload
+to save results. No console reading or chat paste is required. Offline tests model fresh runtime
+environments and validate the new definitions against the real private host. They do not claim
+an in-game visual or filesystem persistence pass.
+
+### First guide UI run (2026-10-16)
+
+The owner completed ui revision 1 and uisave revision 1 on Forever **1.60.1.70425**, enUS,
+using PR #19 runtime e16d18f and pinned LibGlass r9. Saved host records and module STEP lines
+agree. Screenshots were inspected locally; raw SavedVariables and screenshots are not committed.
+
+- ui: completed 18:30:24-18:33:13 local, host runs #57-58; 4 yes, 5 done,
+  checks **1 FAIL, 1 PASS**. The four visual answers cover the list, details, filters and
+  layout. These observations do not replace the owner's requested UX pass.
+- Empty-slot check (step 6): completed by hand with rendered automatic/ready item **247789**,
+  rather than empty. This remains a failed/unresolved empty-state observation; the record
+  does not establish why that wand was still present. Do not count this as a removal pass.
+- Original-wand restoration (step 7): PASS, rendered automatic/ready item **11287**.
+- uisave: completed 18:33:28-18:34:46 local, host runs #58-60; 2 yes, 6 done,
+  check **1 PASS**. The owner confirmed a full client exit/relaunch at step 4.
+  Captured revision 10 was adopted as loadedRevision 10 after restart; the settings
+  signature matched and the owner confirmed visible persistence.
+- Before/after screenshots show the same 820 x 560 window, position and Physical-school
+  filter. Empty results are expected for that filter in the current sample.
+- Captured images: 183041 (list), 183140 (details), 183227 (filters), 183242 (layout),
+  183339 (before exit), 183436 (after exit), all named
+  WoWScrnShot_101626_<time>.jpg in the local Screenshots folder.
+- Layout/scale and details screenshots are evidence of the exercised view only. The record
+  has no UI-scale value or dark-interior note; those variations are not independently established.
+
+The owner will develop the UX direction with ChatGPT. No product UI changes accompany this
+evidence update. Issue #6 stays open; the empty-slot case needs a focused follow-up and the
+visual design needs the owner's UX pass.
+
+The supplied tooltip also confirms a catalog gap for **Novice's Practice Wand (247789)**:
+4-8 Arcane damage, speed 1.50, displayed 4.0 DPS, consistent with earlier live/probe DPS 4.
+A crafted copy is visible, but recipe, profession skill, reagents, source and equip-level
+requirements remain unverified. This is recorded under catalog issue #7 rather than silently
+adding an acquisition recommendation to the nine-item sample.
+
+### Browse Wands run and baseline follow-up (2026-10-16)
+
+The owner completed ui revision 2 using runtime **28d9452**, LibGlass r9 and ForeverProbe
+37fd2ea, on **Forever 1.60.1.70450**, enUS, Interface 16001 / WOW_PROJECT_ID 18.
+The saved host record and module log agree: 19:10:25-19:12:07 local, runs #62-63,
+4 yes, 5 done; checks 1 FAIL and 1 PASS.
+
+- The four visual answers are Yes. Local screenshots 191040, 191058, 191110 and 191126 show
+  the card grid, native item/equipped comparison, source filtering and a narrower one-column
+  layout. Filenames follow WoWScrnShot_101626_<time>.jpg. Raw images remain local.
+- Step 6 has an owner note that "Equipped baseline" does nothing or is unclear. That was a
+  real UX ambiguity: the automatic-mode button merely selected the mode already active.
+  The follow-up displays plain "Comparing with equipped wand" status in automatic mode;
+  a "Use equipped wand" action appears only for a manual/historical comparison.
+- Step 6 was completed by hand while the rendered state remained automatic/ready, item 11287.
+  Its empty-slot check correctly failed.
+- Step 7 immediately recorded PASS for matching item 11287 in that same sample. Revisions 1/2
+  did not require a prior observed empty slot, so this result does **not** establish a valid
+  removal/restoration transition. The probe now requires empty to have been observed first.
+  The same limitation applies to interpreting the older revision-1 restoration check.
+- No revision-2 uisave run is present. The saved uisave record remains revision 1 from 18:33
+  on build 70425; WanderfulDB currently contains no tracked goal. Saved-goal persistence is
+  still pending, rather than inferred from the older geometry/filter pass.
+- Native equipped comparison is visible in 191058. The grouped owner answer covers other
+  interactions, but that screenshot does not independently establish every search, sort,
+  chat-link or tracking action. No numeric UI-scale value or dark-interior note was recorded.
+
+The focused follow-up is /fp steps wand uiequip (revision 1, five steps), leaving the complete
+ui record untouched. Prepare restores automatic comparison; the next step explicitly asks for
+moving the equipped wand from the character equipment window into a bag. The restoration step
+cannot pass without a preceding observed empty slot. /fp steps wand uisave revision 2 remains
+the full-exit settings and tracked-goal check. The full ui definition is now revision 3, with
+a separate preparation action and explicit inventory instructions; no full visual rerun is
+needed just to exercise uiequip.
+
+### Equipment follow-up and settings-capture fix (2026-10-17)
+
+The focused uiequip revision-1 record is complete on Forever **1.60.1.70450**, enUS,
+using runtime 71daf2a, LibGlass r9 and ForeverProbe 37fd2ea. Saved host results and
+module STEP lines agree: 01:30:02-01:30:40 local, runs #68-69; **5 done, checks: 2 PASS**.
+
+- Preparation recorded automatic/ready item 7607.
+- Removal advanced automatically with rendered automatic/empty and no item ID: PASS.
+- Restoration advanced automatically with rendered automatic/ready item 7607: PASS.
+- The reload resumed from run #68 to #69 and the finish is saved. This establishes the
+  previously unresolved rendered empty/restored transition without replacing the visual record.
+
+The owner reported an assertion from uisave revision 2, step 2, in run #70 started 01:30:54.
+The capture required a tracked goal and used assert for this ordinary setup condition.
+This does not establish a tracking-code failure or a persistence failure; capture had not
+succeeded and no current expected-settings sample was available.
+
+uisave revision 3 replaces the combined capture action with separate tracking guidance,
+a deliberate-edit/Next step and a readiness wait that captures automatically. Missing tracking
+now returns a pending explanation instead of raising a Lua error. The text identifies the
+right-hand Track this wand button and the footer Goal indicator, and distinguishes selecting
+or comparing a card from tracking it. Readiness requires a change since Begin, so an existing
+goal/settings combination cannot be captured prematurely.
+
+Restart only /fp steps wand uisave after deploying and reloading this fix. Its definition has
+changed, so the host will stop the old active revision rather than resume at the wrong step.
+The completed uiequip result remains valid and needs no repeat. Current tracked-goal persistence
+remains pending until the revised full-exit procedure is completed.
+
+### Completed tracked-goal persistence run (2026-10-17)
+
+uisave revision 3 completed on Forever **1.60.1.70450**, enUS, using runtime 04e1fdf,
+LibGlass r9 and ForeverProbe 37fd2ea. Saved host results and module STEP lines agree:
+02:23:05-02:26:08 local, host runs #140-142; **2 yes, 8 done; checks: 2 PASS**.
+
+- The procedure observed tracking, then captured deliberate changes at revision 6.
+- The captured sample held Skycaller (12984/base), Dungeon source filtering and a
+  1274 x 679 window. The load-time revision was 6 after restart and the complete settings
+  signature matched, including the tracked goal.
+- The owner confirmed a full exit/relaunch and visibly matching settings/goal.
+- Before/after screenshots WoWScrnShot_101726_022503.jpg and 022558.jpg show matching layout,
+  Dungeon filtering and Goal: Skycaller. The additional 022459.jpg capture was also inspected.
+- The final reload resumed at the finish step and completion is saved. No step errors,
+  failed checks or skips occur in this revision-3 run.
+- This result was in the newest account SavedVariables set, different from the earlier
+  equipment run's set. When inspecting future evidence, compare modification times,
+  procedure identities and timestamps rather than assuming one account directory.
+
+The owner noted that "after editing a level" was unclear. It referred to optional From/To
+fields inside Filters, not character leveling, and is unnecessary for this procedure.
+uisave revision 4 removes that phrase; moving/resizing or changing any filter is sufficient.
+Only instruction text changed, so the successful revision-3 persistence evidence remains
+applicable and no repeat is required.
+
+During this run the rendered baseline was automatic/empty before and after restart. The
+screenshots show No wand equipped and Gain unknown. The owner reported the equipped wand
+was absent during the probe and then clarified that detection works again. Manual mode
+was not active in the saved observations. The settings procedure did not independently
+inspect inventory slots, so these records do not establish whether the slot was empty or
+temporarily unreadable/stale, and do not identify a root cause. No speculative detection
+change is made from this report. The separate uiequip run above already verified actual
+empty/restored rendering transitions on build 70450.
+
+The requested visual, focused equipment and full-exit goal/settings checks for #6 are now
+recorded. Your Path and acquisition-data expansion remain separate milestones (#8 and #7).
+
 ## Runtime adapter procedure (#5)
 
 Use /fp steps wand adapter for the runtime validation. The panel records context, checks and

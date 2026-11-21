@@ -212,12 +212,7 @@ test("runtime registers events, exposes slash commands and labels manual mode", 
         return { RegisterEvent = function(_, event) events[event] = true; return true end,
             SetScript = function(_, key, fn) scripts[key] = fn end }
     end
-    for line in io.lines("Wanderful.toc") do
-        line = line:match("^%s*(.-)%s*$")
-        if line ~= "" and line:sub(1, 1) ~= "#" then
-            local chunk = assert(loadfile(line:gsub("\\", "/"))); setfenv(chunk, env)("Wanderful", runtimeNS)
-        end
-    end
+    dofile("Tools/manifest.lua").Load(env, runtimeNS)
     assert(events.PLAYER_LOGIN and events.ITEM_DATA_LOAD_RESULT and events.GET_ITEM_INFO_RECEIVED)
     assert(runtimeNS.Equipped.loadsAvailable == true)
     scripts.OnEvent(nil, "PLAYER_LOGIN")

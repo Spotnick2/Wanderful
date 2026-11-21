@@ -29,6 +29,18 @@ test("20 to 25 is +5 and +25 percent base wand DPS", function()
     assert(result.relation == "upgrade")
 end)
 
+test("single-precision live DPS matching the catalog is equal, not an upgrade", function()
+    -- Recorded pair: live Lesser Magic Wand baseline vs its catalog range (docs/FOREVER-PROBE.md).
+    local catalog = { stats = { minDamage = 12, maxDamage = 22, speed = 1.5, equipLevel = 5, classIDs = {} } }
+    local live = { stats = { dps = 11.333333015442 } }
+    local same = C.Compare(catalog, live)
+    assert(same.relation == "equal" and same.delta > 0 and same.percent > 0, "raw values stay as evidence")
+    assert(C.Compare(snapshot(11.34), live).relation == "upgrade")
+    assert(C.Compare(snapshot(11.33), live).relation == "downgrade")
+    local wand = { itemID = 11287, variant = "base", name = "Fixture", forever = catalog, sourceIDs = { "vendor" } }
+    assert(#C.List(data({ wand }), live, character, { upgradesOnly = true }) == 0)
+end)
+
 test("equal values and downgrades retain their signs", function()
     local equal = C.Compare(snapshot(20), snapshot(20))
     assert(equal.relation == "equal" and equal.delta == 0 and equal.percent == 0)
@@ -206,13 +218,7 @@ end)
 test("runtime TOC loads the comparison model without client APIs", function()
     local runtimeNS = {}
     local env = setmetatable({ SlashCmdList = {}, print = function() end }, { __index = _G })
-    for line in io.lines("Wanderful.toc") do
-        line = line:match("^%s*(.-)%s*$")
-        if line ~= "" and line:sub(1, 1) ~= "#" then
-            local chunk = assert(loadfile(line:gsub("\\", "/")))
-            setfenv(chunk, env)("Wanderful", runtimeNS)
-        end
-    end
+    dofile("Tools/manifest.lua").Load(env, runtimeNS)
     assert(runtimeNS.Comparison.Compare(snapshot(25), snapshot(20)).percent == 25)
     assert(#runtimeNS.Comparison.List(runtimeNS.WandData, snapshot(10), character) > 0)
 end)
